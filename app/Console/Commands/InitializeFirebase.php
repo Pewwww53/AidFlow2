@@ -34,7 +34,7 @@ class InitializeFirebase extends Command
         try {
             // Test connection by getting all users
             $users = $firebase->getAllUsers();
-            
+
             $this->info('✓ Firebase connection successful!');
             $this->info("  Database contains " . count($users) . " users");
 
@@ -67,7 +67,7 @@ class InitializeFirebase extends Command
 
         try {
             $firebase->createUser([
-                'name' => 'Admin User',
+                'fullName' => 'Admin User',
                 'username' => 'admin',
                 'email' => 'admin@example.com',
                 'password' => Hash::make('password123'),

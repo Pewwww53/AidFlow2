@@ -12,7 +12,7 @@ class User implements AuthenticatableContract
     use Authenticatable, Notifiable;
 
     protected $firebase;
-    protected $fillable = ['name', 'username', 'email', 'password', 'role'];
+    protected $fillable = ['fullName', 'username', 'email', 'password', 'role'];
     protected $hidden = ['password'];
     protected $attributes = [];
 

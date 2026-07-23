@@ -4,185 +4,140 @@
 @section('page-title', 'Users')
 
 @section('content')
-<div class="space-y-6">
-    <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-gray-900">User Management</h2>
-        <button id="addUserBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            <i class="fas fa-plus mr-2"></i> Add User
-        </button>
-    </div>
-
-    <!-- Filters -->
-    <form method="GET" action="{{ route('users.index') }}" class="bg-white rounded-lg shadow p-4">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-                <input type="text" name="search" placeholder="Search users..." value="{{ request('search') }}" 
-                    class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            <div>
-                <select name="role" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">All Roles</option>
-                    <option value="admin" {{ request('role') === 'admin' ? 'selected' : '' }}>Admin</option>
-                    <option value="user" {{ request('role') === 'user' ? 'selected' : '' }}>User</option>
-                </select>
-            </div>
-            <button type="submit" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
-                <i class="fas fa-search mr-2"></i> Filter
-            </button>
+    <div class="flex flex-col gap-4 min-h-[calc(100vh-120px)] w-full border-4 rounded-2xl border-red-600 p-4">
+        <div class="flex flex-row gap-4">
+            <h1 class="text-2xl font-bold text-red-800">Users Management</h1>
+            <input type="text" placeholder="Search users..."
+                class="flex-1 border border-gray-300 rounded-full px-4 py-2 w-full">
+            <button
+                class="cursor-pointer bg-red-300 text-red-500 border border-red-500 font-bold px-4 py-2 rounded-full w-50"
+                onclick="document.getElementById('addUserModal').classList.remove('hidden')">
+                + Add User</button>
         </div>
-    </form>
-
-    <!-- Users Table -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <div class="overflow-x-auto">
-            <table class="w-full">
-                <thead>
-                    <tr class="border-b">
-                        <th class="text-left py-3 px-4 font-medium text-gray-700">Name</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-700">Username</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-700">Email</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-700">Role</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-700">Created</th>
-                        <th class="text-left py-3 px-4 font-medium text-gray-700">Actions</th>
+        <table class="w-full border border-gray-300 rounded-lg">
+            <thead>
+                <tr class="bg-red-300 text-red-500 font-bold">
+                    <th class="px-4 py-2 text-left">Full Name</th>
+                    <th class="px-4 py-2 text-left">Birth Date</th>
+                    <th class="px-4 py-2 text-left">Gender</th>
+                    <th class="px-4 py-2 text-left">Address</th>
+                    <th class="px-4 py-2 text-left">Email</th>
+                    <th class="px-4 py-2 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($users as $user)
+                    <tr class="border-t border-gray-300">
+                        <td class="px-4 py-2">{{ $user->fullName }}</td>
+                        <td class="px-4 py-2">{{ $user->birthDate }}</td>
+                        <td class="px-4 py-2">{{ $user->gender }}</td>
+                        <td class="px-4 py-2">{{ $user->address }}</td>
+                        <td class="px-4 py-2">{{ $user->email }}</td>
+                        <td class="flex flex-row gap-2 px-4 py-2">
+                            <button class="cursor-pointer text-red-500 font-bold px-4 py-2 rounded"><i
+                                    class="fa fa-edit"></i></button>
+                            <button class="cursor-pointer text-red-500 font-bold px-4 py-2 rounded"><i
+                                    class="fa fa-trash"></i></button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse($users as $user)
-                        <tr class="border-b hover:bg-gray-50">
-                            <td class="py-3 px-4 text-gray-900">{{ $user->name }}</td>
-                            <td class="py-3 px-4 text-gray-900">{{ $user->username }}</td>
-                            <td class="py-3 px-4 text-gray-900">{{ $user->email }}</td>
-                            <td class="py-3 px-4">
-                                <span class="px-2 py-1 rounded text-xs font-medium {{ $user->role === 'admin' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800' }}">
-                                    {{ ucfirst($user->role) }}
-                                </span>
-                            </td>
-                            <td class="py-3 px-4 text-gray-900">{{ $user->created_at->format('Y-m-d') }}</td>
-                            <td class="py-3 px-4">
-                                <button type="button" class="edit-user-btn text-blue-600 hover:text-blue-800 mr-2" data-id="{{ $user->id }}">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                @if(Auth::id() !== $user->id)
-                                    <form method="POST" action="{{ route('users.destroy', $user) }}" style="display:inline;">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="text-red-600 hover:text-red-800" onclick="return confirm('Delete this user?')">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                    </form>
-                                @endif
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="6" class="py-4 px-4 text-center text-gray-600">No users found</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    <div id="addUserModal"
+        class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-5xl rounded-2xl border-4 border-red-600 bg-white shadow-2xl overflow-hidden">
+            <div class="flex flex-col gap-4 p-4">
+                <h2 class="text-2xl font-bold text-red-800">Add User</h2>
+                <form action="{{ route('users.store') }}" method="POST" class="flex flex-col gap-4">
+                    @csrf
+                    <div class="flex flex-row gap-4">
+                        <div class="flex-1">
+                            <input type="text" name="fullName" placeholder="Full Name" value="{{ old('fullName') }}"
+                                class="w-full border rounded-full px-4 py-2 {{ $errors->has('fullName') ? 'border-red-600 ring-1 ring-red-200' : 'border-gray-300' }}">
+                            @if($errors->has('fullName'))
+                                <p class="mt-1 text-sm text-red-600 flex items-center gap-2"><i
+                                        class="fa fa-exclamation-circle"></i> {{ $errors->first('fullName') }}</p>
+                            @endif
+                        </div>
+                        <div class="flex-1">
+                            <input type="password" name="password" placeholder="Password"
+                                class="w-full border rounded-full px-4 py-2 {{ $errors->has('password') ? 'border-red-600 ring-1 ring-red-200' : 'border-gray-300' }}">
+                            @if($errors->has('password'))
+                                <p class="mt-1 text-sm text-red-600 flex items-center gap-2"><i
+                                        class="fa fa-exclamation-circle"></i> {{ $errors->first('password') }}</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div>
+                        <input type="email" name="email" placeholder="Email" value="{{ old('email') }}"
+                            class="w-full border rounded-full px-4 py-2 {{ $errors->has('email') ? 'border-red-600 ring-1 ring-red-200' : 'border-gray-300' }}">
+                        @if($errors->has('email'))
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-2"><i
+                                    class="fa fa-exclamation-circle"></i> {{ $errors->first('email') }}</p>
+                        @endif
+                    </div>
+
+                    <div>
+                        <input type="date" name="birthDate" placeholder="Birth Date" value="{{ old('birthDate') }}"
+                            class="w-full border rounded-full px-4 py-2 {{ $errors->has('birthDate') ? 'border-red-600 ring-1 ring-red-200' : 'border-gray-300' }}">
+                        @if($errors->has('birthDate'))
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-2"><i
+                                    class="fa fa-exclamation-circle"></i> {{ $errors->first('birthDate') }}</p>
+                        @endif
+                    </div>
+
+                    <div>
+                        <input type="text" name="address" placeholder="Address" value="{{ old('address') }}"
+                            class="w-full border rounded-full px-4 py-2 {{ $errors->has('address') ? 'border-red-600 ring-1 ring-red-200' : 'border-gray-300' }}">
+                        @if($errors->has('address'))
+                            <p class="mt-1 text-sm text-red-600 flex items-center gap-2"><i
+                                    class="fa fa-exclamation-circle"></i> {{ $errors->first('address') }}</p>
+                        @endif
+                    </div>
+
+                    <div class="flex flex-row gap-4">
+                        <div class="flex-1">
+                            <select name="role"
+                                class="w-full border rounded-full px-4 py-2 {{ $errors->has('role') ? 'border-red-600 ring-1 ring-red-200' : 'border-gray-300' }}">
+                                <option value="">Role</option>
+                                <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
+                            </select>
+                            @if($errors->has('role'))
+                                <p class="mt-1 text-sm text-red-600 flex items-center gap-2"><i
+                                        class="fa fa-exclamation-circle"></i> {{ $errors->first('role') }}</p>
+                            @endif
+                        </div>
+
+                        <div class="flex-1">
+                            <select name="gender"
+                                class="w-full border rounded-full px-4 py-2 {{ $errors->has('gender') ? 'border-red-600 ring-1 ring-red-200' : 'border-gray-300' }}">
+                                <option value="">Gender</option>
+                                <option value="Male" {{ old('gender') == 'Male' ? 'selected' : '' }}>Male</option>
+                                <option value="Female" {{ old('gender') == 'Female' ? 'selected' : '' }}>Female</option>
+                            </select>
+                            @if($errors->has('gender'))
+                                <p class="mt-1 text-sm text-red-600 flex items-center gap-2"><i
+                                        class="fa fa-exclamation-circle"></i> {{ $errors->first('gender') }}</p>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="flex flex-row gap-4 justify-end">
+                        <button type="button"
+                            class="cursor-pointer bg-gray-300 text-gray-500 border border-gray-500 font-bold px-4 py-2 rounded-full w-50"
+                            onclick="document.getElementById('addUserModal').classList.add('hidden')">Cancel</button>
+                        <button type="submit"
+                            class="cursor-pointer bg-red-300 text-red-500 border border-red-500 font-bold px-4 py-2 rounded-full w-50">Add
+                            User</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
-    <!-- Pagination -->
-    <div class="flex justify-center">
-        {{ $users->links() }}
-    </div>
-</div>
-
-<!-- Add/Edit User Modal -->
-<div id="userModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-    <div class="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
-        <h3 id="userModalTitle" class="text-lg font-bold text-gray-900 mb-4">Add New User</h3>
-        <form id="userForm" method="POST" action="{{ route('users.store') }}" class="space-y-4">
-            @csrf
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
-                <input type="text" name="name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                <input type="text" name="username" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" name="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            
-            <div id="passwordField">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input type="password" name="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-            
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Role</label>
-                <select name="role" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                </select>
-            </div>
-            
-            <div class="flex gap-3">
-                <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Save</button>
-                <button type="button" id="closeUserModal" class="flex-1 px-4 py-2 bg-gray-300 text-gray-900 rounded-lg hover:bg-gray-400">Cancel</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<script>
-    const userModal = document.getElementById('userModal');
-    const addUserBtn = document.getElementById('addUserBtn');
-    const closeUserModalBtn = document.getElementById('closeUserModal');
-    const userForm = document.getElementById('userForm');
-    const userModalTitle = document.getElementById('userModalTitle');
-
-    addUserBtn.addEventListener('click', () => {
-        userModalTitle.textContent = 'Add New User';
-        userForm.action = '{{ route("users.store") }}';
-        userForm.method = 'POST';
-        document.getElementById('passwordField').style.display = 'block';
-        const passwordInput = document.querySelector('[name="password"]');
-        if (passwordInput) passwordInput.required = true;
-        userForm.reset();
-        userModal.classList.remove('hidden');
-    });
-
-    closeUserModalBtn.addEventListener('click', () => {
-        userModal.classList.add('hidden');
-    });
-
-    document.querySelectorAll('.edit-user-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const userId = btn.dataset.id;
-            userModalTitle.textContent = 'Edit User';
-            userForm.action = `{{ route('users.index') }}/${userId}`;
-            
-            // Add method override for PUT
-            let methodInput = userForm.querySelector('input[name="_method"]');
-            if (!methodInput) {
-                methodInput = document.createElement('input');
-                methodInput.type = 'hidden';
-                methodInput.name = '_method';
-                userForm.appendChild(methodInput);
-            }
-            methodInput.value = 'PUT';
-            
-            document.getElementById('passwordField').style.display = 'none';
-            const passwordInput = document.querySelector('[name="password"]');
-            if (passwordInput) passwordInput.required = false;
-            
-            userModal.classList.remove('hidden');
-        });
-    });
-
-    // Close modal when clicking outside
-    userModal.addEventListener('click', (e) => {
-        if (e.target === userModal) {
-            userModal.classList.add('hidden');
-        }
-    });
-</script>
+    <script>
+    </script>
 @endsection

@@ -138,22 +138,15 @@
                     </tbody>
                 </table>
             </div>
-            @php
-                $expiredToggleUrl = request('status') === 'expired'
-                    ? route('inventory.index')
-                    : route('inventory.index', ['status' => 'expired']);
-                $expiredToggleLabel = request('status') === 'expired' ? 'Show All Items' : 'View Expired Items';
-            @endphp
             <div class="flex gap-3 justify-center mt-3">
-                <a href="{{ $expiredToggleUrl }}"
-                    class="px-4 py-2 rounded-full bg-pink-100 border-2 border-red-600 text-red-800 font-bold">{{ $expiredToggleLabel }}</a>
+
                 @if ($inventoryItems->isNotEmpty())
+                    <button type="button" id="openExpiredModal"
+                        class="cursor-pointer px-4 py-2 rounded-full bg-pink-100 border-2 border-red-600 text-red-800 font-bold">View
+                        Expired Items</button>
                     <button type="button" id="openBatchModal"
-                        class="px-4 py-2 rounded-full bg-pink-100 border-2 border-red-600 text-red-800 font-bold">View
+                        class="cursor-pointer px-4 py-2 rounded-full bg-pink-100 border-2 border-red-600 text-red-800 font-bold">View
                         Batch</button>
-                @else
-                    <span class="px-4 py-2 rounded-full bg-pink-100 border-2 border-red-600 text-red-800 font-bold">View
-                        Batch</span>
                 @endif
             </div>
         </div>
@@ -213,6 +206,65 @@
         </div>
     </div>
 
+    <div id="expiredModal"
+        class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-5xl rounded-2xl border-4 border-red-600 bg-white shadow-2xl overflow-hidden">
+            <div class="px-6 py-5 text-white">
+                <div class="flex items-center justify-between gap-4">
+                    <div>
+                        <div class="text-xs uppercase tracking-[0.35em] text-red-400">Expired Items</div>
+                        <h3 class="text-3xl font-bold text-red-600">Expired Inventory</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="overflow-hidden rounded border border-red-600 bg-[#ffdfe1] shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left">
+                            <thead class="text-red-700">
+                                <tr>
+                                    <th class="px-5 py-4">Item</th>
+                                    <th class="px-5 py-4">Category</th>
+                                    <th class="px-5 py-4">Quantity</th>
+                                    <th class="px-5 py-4">Exp Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $expiredItemsForModal = $inventoryItems->filter(function ($item) use ($today) {
+                                        $expirationDate = $item['expirationDate'] ?? null;
+
+                                        return $expirationDate && \Carbon\Carbon::parse($expirationDate)->lt($today);
+                                    })->values();
+                                @endphp
+                                @forelse($expiredItemsForModal as $item)
+                                    <tr class="border-t border-red-100">
+                                        <td class="px-5 py-4 text-gray-900">{{ $item['name'] ?? 'Unnamed Item' }}</td>
+                                        <td class="px-5 py-4 text-gray-900">{{ $item['category'] ?? 'Uncategorized' }}</td>
+                                        <td class="px-5 py-4 text-gray-900">{{ $item['stock'] ?? 0 }}</td>
+                                        <td class="px-5 py-4 text-gray-900">
+                                            {{ $item['expirationDate'] ? \Carbon\Carbon::parse($item['expirationDate'])->format('m/d/y') : '—' }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="px-5 py-8 text-center text-gray-500">No expired items found.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
+                    <button type="button" id="expiredCloseBtn"
+                        class="cursor-pointer inline-flex items-center justify-center rounded-full border border-red-700 bg-white px-6 py-3 text-red-700 font-semibold transition hover:bg-red-50">Back
+                        to Inventory</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="batchModal"
         class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="w-full max-w-5xl rounded-2xl border-4 border-red-600 bg-white shadow-2xl overflow-hidden">
@@ -222,10 +274,6 @@
                         <div class="text-xs uppercase tracking-[0.35em] text-red-400">Table of Item Batch</div>
                         <h3 class="text-3xl font-bold text-red-600">Batch Details</h3>
                     </div>
-                    <button type="button" id="closeBatchModal"
-                        class="rounded-full border border-white/30 bg-white/10 px-4 py-2 text-white transition hover:bg-white/20">
-                        Back to Inventory
-                    </button>
                 </div>
             </div>
             <div class="p-6">
@@ -268,9 +316,9 @@
 
                 <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
                     <button type="button" id="batchSaveBtn"
-                        class="inline-flex items-center justify-center rounded-full bg-red-700 px-6 py-3 text-white font-semibold transition hover:bg-red-800">Save</button>
+                        class="cursor-pointer inline-flex items-center justify-center rounded-full bg-red-700 px-6 py-3 text-white font-semibold transition hover:bg-red-800">Save</button>
                     <button type="button" id="batchCloseBtn"
-                        class="inline-flex items-center justify-center rounded-full border border-red-700 bg-white px-6 py-3 text-red-700 font-semibold transition hover:bg-red-50">Back
+                        class="cursor-pointer inline-flex items-center justify-center rounded-full border border-red-700 bg-white px-6 py-3 text-red-700 font-semibold transition hover:bg-red-50">Back
                         to Inventory</button>
                 </div>
             </div>
@@ -279,12 +327,26 @@
 
     @push('scripts')
         <script>
+            const expiredModal = document.getElementById('expiredModal');
+            const openExpiredModalBtn = document.getElementById('openExpiredModal');
+            const closeExpiredModalBtn = document.getElementById('closeExpiredModal');
+            const expiredCloseBtn = document.getElementById('expiredCloseBtn');
             const batchModal = document.getElementById('batchModal');
             const openBatchModalBtn = document.getElementById('openBatchModal');
             const closeBatchModalBtn = document.getElementById('closeBatchModal');
             const batchCloseBtn = document.getElementById('batchCloseBtn');
             const batchSaveBtn = document.getElementById('batchSaveBtn');
             const batchTabButtons = document.querySelectorAll('.batch-tab');
+
+            function openExpiredModal() {
+                expiredModal.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+
+            function closeExpiredModal() {
+                expiredModal.classList.add('hidden');
+                document.body.classList.remove('overflow-hidden');
+            }
 
             function openBatchModal() {
                 batchModal.classList.remove('hidden');
@@ -296,10 +358,19 @@
                 document.body.classList.remove('overflow-hidden');
             }
 
+            openExpiredModalBtn?.addEventListener('click', openExpiredModal);
+            closeExpiredModalBtn?.addEventListener('click', closeExpiredModal);
+            expiredCloseBtn?.addEventListener('click', closeExpiredModal);
             openBatchModalBtn?.addEventListener('click', openBatchModal);
             closeBatchModalBtn?.addEventListener('click', closeBatchModal);
             batchCloseBtn?.addEventListener('click', closeBatchModal);
             batchSaveBtn?.addEventListener('click', closeBatchModal);
+
+            expiredModal?.addEventListener('click', (event) => {
+                if (event.target === expiredModal) {
+                    closeExpiredModal();
+                }
+            });
 
             batchModal?.addEventListener('click', (event) => {
                 if (event.target === batchModal) {

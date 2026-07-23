@@ -90,4 +90,82 @@ class FirebaseService
     {
         return $this->get('occupiedTents');
     }
+
+    /**
+     * Get all users from Firebase
+     */
+    public function getAllUsers()
+    {
+        $users = $this->get('accounts');
+
+        if (!is_array($users)) {
+            return [];
+        }
+
+        // Convert associative array to indexed array of user objects
+        $result = [];
+        foreach ($users as $username => $userData) {
+            if (is_array($userData)) {
+                $userData['username'] = $username;
+                if (!isset($userData['id'])) {
+                    $userData['id'] = $username;
+                }
+                $result[] = $userData;
+            }
+        }
+        return $result;
+    }
+
+    /**
+     * Get user by username
+     */
+    public function getUserByUsername($username)
+    {
+        $userData = $this->getAccount($username);
+
+        if ($userData && is_array($userData)) {
+            $userData['username'] = $username;
+            if (!isset($userData['id'])) {
+                $userData['id'] = $username;
+            }
+        }
+
+        return $userData;
+    }
+
+    /**
+     * Get user by ID (ID is typically the username in Firebase)
+     */
+    public function getUserById($id)
+    {
+        return $this->getUserByUsername($id);
+    }
+
+    /**
+     * Create a new user in Firebase
+     */
+    public function createUser($username, array $data)
+    {
+        return $this->write("accounts/{$username}", $data, 'put');
+    }
+
+    /**
+     * Update user in Firebase
+     */
+    public function updateUser($username, array $data)
+    {
+        return $this->write("accounts/{$username}", $data, 'put');
+    }
+
+    /**
+     * Delete user from Firebase
+     */
+    public function deleteUser($username)
+    {
+        $response = Http::withoutVerifying()->delete(
+            "{$this->databaseUrl}/accounts/{$username}.json"
+        );
+
+        return $response->successful();
+    }
 }

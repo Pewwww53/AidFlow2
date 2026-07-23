@@ -32,8 +32,6 @@
                         <p class="text-sm text-gray-600">Current occupied tents and barangay evacuation records.</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
-                        <button id="filterBtn"
-                            class="px-5 py-2 bg-[#960505] text-white rounded-lg text-sm hover:bg-[#b92e2e] transition">Filter</button>
                         <button id="resetBtn"
                             class="px-5 py-2 bg-gray-200 text-gray-700 rounded-lg text-sm hover:bg-gray-300 transition">Reset</button>
                     </div>
@@ -50,7 +48,7 @@
                     <label class="sr-only" for="barangayFilter">Barangay</label>
                     <select id="barangayFilter"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#960505] lg:w-[220px]">
-                        <option value="">Barangay</option>
+                        <option value="all">All</option>
                         <option>Balong-Bato</option>
                         <option>Salapan</option>
                         <option>West Crame</option>
@@ -72,7 +70,7 @@
                 <div class="border border-gray-300 rounded-[14px] overflow-hidden">
                     <div class="overflow-x-auto ">
                         <table class="min-w-full text-sm text-left text-gray-800">
-                            <thead class="bg-gray-100">
+                            <thead class="bg-[#960505] text-white">
                                 <tr>
                                     <th class="px-3 py-3 font-normal">Date</th>
                                     <th class="px-3 py-3 font-normal">Tent ID</th>
@@ -216,18 +214,17 @@
             const occupancyData = @json($occupancyData ?? []);
             const searchInput = document.getElementById('searchInput');
             const barangayFilter = document.getElementById('barangayFilter');
-            const filterBtn = document.getElementById('filterBtn');
             const resetBtn = document.getElementById('resetBtn');
             const tableBody = document.getElementById('evacuationTableBody');
 
             const renderTable = (rows) => {
                 tableBody.innerHTML = rows.map(row => `
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            <tr class="border-b border-gray-200 last:border-0">
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.date}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.tentId}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.barangay}</td>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            </tr>
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        `).join('');
+                                                                                                                        <tr class="border-b border-gray-200 last:border-0">
+                                                                                                                        <td class="px-3 py-3 whitespace-nowrap">${row.date}</td>
+                                                                                                                        <td class="px-3 py-3 whitespace-nowrap">${row.tentId}</td>
+                                                                                                                        <td class="px-3 py-3 whitespace-nowrap">${row.barangay}</td>
+                                                                                                                        </tr>
+                                                                                                `).join('');
             };
 
             const applyFilters = () => {
@@ -235,16 +232,18 @@
                 const barangay = barangayFilter.value;
                 const filtered = tableRows.filter(row => {
                     const matchesText = !text || row.tentId.toLowerCase().includes(text) || row.date.toLowerCase().includes(text) || row.barangay.toLowerCase().includes(text);
-                    const matchesBarangay = !barangay || row.barangay === barangay;
+                    const matchesBarangay = barangay === 'all' || !barangay || row.barangay === barangay;
                     return matchesText && matchesBarangay;
                 });
                 renderTable(filtered);
             };
 
-            filterBtn.addEventListener('click', applyFilters);
+            searchInput.addEventListener('input', applyFilters);
+            barangayFilter.addEventListener('change', applyFilters);
+
             resetBtn.addEventListener('click', () => {
                 searchInput.value = '';
-                barangayFilter.value = '';
+                barangayFilter.value = 'all';
                 renderTable(tableRows);
             });
 
@@ -317,7 +316,7 @@
             document.addEventListener('DOMContentLoaded', () => {
                 const map = L.map('evacuation-map', {
                     zoomControl: false,
-                    dragging: true,
+                    dragging: false,
                     doubleClickZoom: false,
                     scrollWheelZoom: false,
                     attributionControl: false,

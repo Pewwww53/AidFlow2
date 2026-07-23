@@ -26,7 +26,7 @@ class RegisterController extends Controller
     {
         // Custom validation without database unique rules
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'fullName' => 'required|string|max:255',
             'username' => 'required|string|max:255',
             'email' => 'required|string|email|max:255',
             'password' => 'required|string|min:8|confirmed',
@@ -37,20 +37,20 @@ class RegisterController extends Controller
         if ($this->firebaseService->usernameExists($validated['username'])) {
             return back()
                 ->withErrors(['username' => 'The username has already been taken.'])
-                ->onlyInput('username', 'email', 'name');
+                ->onlyInput('username', 'email', 'fullName');
         }
 
         // Check if email already exists in Firebase
         if ($this->firebaseService->emailExists($validated['email'])) {
             return back()
                 ->withErrors(['email' => 'The email has already been registered.'])
-                ->onlyInput('username', 'email', 'name');
+                ->onlyInput('username', 'email', 'fullName');
         }
 
         try {
             // Create user object with hashed password
             $user = new User([
-                'name' => $validated['name'],
+                'fullName' => $validated['fullName'],
                 'username' => $validated['username'],
                 'email' => $validated['email'],
                 'password' => Hash::make($validated['password']),

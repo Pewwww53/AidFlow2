@@ -27,7 +27,7 @@
         <div class="flex items-center gap-2">
             <div class="text-right">
                 <div class="font-semibold">
-                    {{ session('user.name') ?? session('user')['name'] ?? 'Guest' }}
+                    {{ session('user.fullName') ?? session('user')['fullName'] ?? 'Guest' }}
                 </div>
                 <div class="text-sm text-gray-600">
                     {{ ucfirst(session('user.role') ?? session('user')['role'] ?? 'guest') }}
@@ -68,7 +68,11 @@
                         <i class="fas fa-box mr-2"></i> Inventory
                     </a>
 
-                    <a href="{{ route('qrcode.index') }}" @class(['block px-4 py-3 rounded-lg font-medium', 'bg-white text-[#960505] shadow' => request()->routeIs('qrcode.*'), 'text-white hover:bg-white hover:text-[#960505] transition' => !request()->routeIs('qrcode.*')])>
+                    <a href="{{ route('qrcode.index') }}" @class([
+                        'block px-4 py-3 rounded-lg font-medium',
+                        'bg-white text-[#960505] shadow' => request()->routeIs('qrcode.*'),
+                        'text-white hover:bg-white hover:text-[#960505] transition' => !request()->routeIs('qrcode.*')
+                    ])>
                         <i class="fas fa-qrcode mr-2"></i> QR Code
                     </a>
 
