@@ -22,6 +22,26 @@
         .map-label-tooltip.leaflet-tooltip-bottom {
             margin-top: -6px;
         }
+
+        /* Glowing highlight styles for Leaflet SVG features */
+        .glow-red {
+            filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.95));
+            transition: filter 150ms ease;
+        }
+
+        .glow-amber {
+            filter: drop-shadow(0 0 10px rgba(180, 100, 20, 0.9));
+            transition: filter 150ms ease;
+        }
+
+        .glow-green {
+            filter: drop-shadow(0 0 10px rgba(40, 148, 50, 0.9));
+            transition: filter 150ms ease;
+        }
+
+        .glow-hover {
+            stroke-width: 3px;
+        }
     </style>
     <div class="flex gap-4 min-h-[calc(100vh-120px)]">
         <div class="bg-white rounded-[20px] border-[3px] border-[#8a1c1c] p-4 shadow-sm">
@@ -179,7 +199,106 @@
             </div>
         </div>
     </div>
+    <!-- Barangay Details Modal -->
+    <div id="barangayModal" class="fixed inset-0 hidden items-center justify-center bg-black/50 z-[9999]">
 
+        <div class="relative bg-white rounded-2xl w-[900px] max-w-[95vw] p-6">
+
+            <!-- Close -->
+            <button id="closeBarangayModal" class="absolute top-4 right-5 text-5xl leading-none">
+                &times;
+            </button>
+
+            <h2 id="barangayTitle" class="text-2xl text-red-700 font-semibold mb-5">
+                Barangay Detail
+            </h2>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-3 gap-5">
+
+                <div class="border-2 border-red-700 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-xl bg-red-400"></div>
+
+                    <div>
+                        <p class="text-gray-600">Total Tents</p>
+                        <h1 id="totalTents" class="text-5xl">0</h1>
+                    </div>
+                </div>
+
+                <div class="border-2 border-red-700 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-xl bg-red-400"></div>
+
+                    <div>
+                        <p class="text-gray-600">Occupied</p>
+                        <h1 id="occupiedTents" class="text-5xl">0</h1>
+                    </div>
+                </div>
+
+                <div class="border-2 border-red-700 rounded-2xl p-4 flex items-center gap-4">
+                    <div class="w-16 h-16 rounded-xl bg-red-400"></div>
+
+                    <div>
+                        <p class="text-gray-600">Available</p>
+                        <h1 id="availableTents" class="text-5xl">0</h1>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="grid grid-cols-3 gap-4 mt-6">
+
+                <div class="col-span-2 border rounded-xl overflow-hidden">
+
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="p-2">Date</th>
+                                <th class="p-2">Tent</th>
+                                <th class="p-2">Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="barangayTentTable"></tbody>
+
+                    </table>
+
+                </div>
+
+                <div class="border rounded-xl flex flex-col justify-center items-center">
+
+                    <h3 class="text-red-700 text-xl font-semibold">
+                        Occupancy Level
+                    </h3>
+
+                    <div class="relative w-52 h-52 mt-4">
+
+                        <svg class="rotate-[-90deg]" width="210" height="210">
+                            <circle cx="105" cy="105" r="90" stroke="#eee" stroke-width="12" fill="none" />
+
+                            <circle id="occupancyCircle" cx="105" cy="105" r="90" stroke="#dc2626" stroke-width="12"
+                                fill="none" stroke-linecap="round" />
+                        </svg>
+
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+
+                            <div id="occupancyPercent" class="text-4xl text-red-700 font-bold">
+                                0%
+                            </div>
+
+                            <div class="text-gray-500">
+                                Occupied
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </div>
 
     @push('scripts')
         @php
@@ -189,20 +308,25 @@
                         'date' => !empty($scan['scannedAt'])
                             ? \Carbon\Carbon::parse($scan['scannedAt'])->format('m/d/Y')
                             : date('m/d/Y'),
+
                         'tentId' => $scan['tentCode'] ?? $scan['tent_id'] ?? 'T-001',
-                        'barangay' => $scan['barangay'] ?? $scan['barangayName'] ?? $scan['barangay_name'] ?? 'Balong-Bato',
+
+                        'barangay' => $scan['barangay']
+                            ?? $scan['barangayName']
+                            ?? $scan['barangay_name']
+                            ?? 'Balong-Bato',
+
+                        'status' => 'Occupied',
                     ];
                 })->values()
                 : collect([
-                    ['date' => '06/15/2026', 'tentId' => 'BB-001', 'barangay' => 'Balong-Bato'],
-                    ['date' => '06/15/2026', 'tentId' => 'BB-002', 'barangay' => 'Balong-Bato'],
-                    ['date' => '06/15/2026', 'tentId' => 'BB-003', 'barangay' => 'Balong-Bato'],
-                    ['date' => '06/15/2026', 'tentId' => 'BB-004', 'barangay' => 'Balong-Bato'],
-                    ['date' => '06/17/2026', 'tentId' => 'S-001', 'barangay' => 'Salapan'],
-                    ['date' => '06/17/2026', 'tentId' => 'S-002', 'barangay' => 'Salapan'],
-                    ['date' => '06/17/2026', 'tentId' => 'S-003', 'barangay' => 'Salapan'],
-                    ['date' => '06/25/2026', 'tentId' => 'WC-001', 'barangay' => 'West Crame'],
-                    ['date' => '06/25/2026', 'tentId' => 'WC-002', 'barangay' => 'West Crame'],
+                    [
+                        'date' => '06/15/2026',
+                        'tentId' => 'BB-001',
+                        'barangay' => 'Balong-Bato',
+                        'status' => 'Occupied',
+                    ],
+                    // ...
                 ]);
         @endphp
         <script type="module">
@@ -219,12 +343,12 @@
 
             const renderTable = (rows) => {
                 tableBody.innerHTML = rows.map(row => `
-                                                                                                                        <tr class="border-b border-gray-200 last:border-0">
-                                                                                                                        <td class="px-3 py-3 whitespace-nowrap">${row.date}</td>
-                                                                                                                        <td class="px-3 py-3 whitespace-nowrap">${row.tentId}</td>
-                                                                                                                        <td class="px-3 py-3 whitespace-nowrap">${row.barangay}</td>
-                                                                                                                        </tr>
-                                                                                                `).join('');
+                                                                                                                                                                                                                                                <tr class="border-b border-gray-200 last:border-0">
+                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.date}</td>
+                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.tentId}</td>
+                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.barangay}</td>
+                                                                                                                                                                                                                                                </tr>
+                                                                                                                                                                                                                        `).join('');
             };
 
             const applyFilters = () => {
@@ -349,6 +473,9 @@
                                     if (el) el.classList.remove('glow-hover');
                                     try { layer.setStyle(getStyleForFeature(feature)); } catch (e) { }
                                 });
+                                layer.on("click", () => {
+                                    openBarangayModal(feature, info);
+                                });
                             },
                         }).addTo(map);
 
@@ -376,6 +503,72 @@
                     });
                 }
             });
+            const modal = document.getElementById("barangayModal");
+
+            document
+                .getElementById("closeBarangayModal")
+                .addEventListener("click", () => {
+                    modal.classList.add("hidden");
+                    modal.classList.remove("flex");
+                });
+
+            function openBarangayModal(feature, info) {
+
+                const occupied = occupancyData[info.code] ?? 0;
+                const total = info.maxTents;
+                const available = total - occupied;
+                const occupiedTents = tableRows.filter(row =>
+                    row.barangay === feature.properties.name
+                );
+
+                document.getElementById("barangayTitle").textContent =
+                    `Barangay Detail: ${feature.properties.name}`;
+
+                document.getElementById("totalTents").textContent = total;
+                document.getElementById("occupiedTents").textContent = occupied;
+                document.getElementById("availableTents").textContent = available;
+
+                const percent = total
+                    ? ((occupied / total) * 100).toFixed(2)
+                    : "0.00";
+
+                document.getElementById("occupancyPercent").textContent =
+                    percent + "%";
+
+                const radius = 90;
+                const circumference = 2 * Math.PI * radius;
+
+                const offset =
+                    circumference - (percent / 100) * circumference;
+
+                const circle = document.getElementById("occupancyCircle");
+
+                circle.style.strokeDasharray = circumference;
+                circle.style.strokeDashoffset = offset;
+
+                const tbody = document.getElementById("barangayTentTable");
+                tbody.innerHTML = "";
+
+                Object.keys(barangayList.find(b => b.code === info.code).tents)
+                    .forEach(tentId => {
+
+                        const occupied = occupiedTents.find(t => t.tentId === tentId);
+
+                        tbody.innerHTML += `
+                <tr>
+                    <td>${occupied?.date ?? "--"}</td>
+                    <td>${tentId}</td>
+                    <td class="${occupied ? "text-red-500" : "text-green-500"
+                            }">
+                        ${occupied ? "Occupied" : "Available"}
+                    </td>
+                </tr>
+            `;
+                    });
+
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+            }
         </script>
     @endpush
 @endsection

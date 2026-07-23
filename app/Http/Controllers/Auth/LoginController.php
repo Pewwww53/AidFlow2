@@ -27,7 +27,6 @@ class LoginController extends Controller
         ]);
 
         $account = $firebase->getAccount($request->username);
-
         if (!$account) {
             return back()->withErrors([
                 'username' => 'Account not found.',

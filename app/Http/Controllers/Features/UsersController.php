@@ -97,65 +97,61 @@ class UsersController extends Controller
         return redirect()->back()->withErrors(['error' => 'Failed to create user']);
     }
 
-    public function update(Request $request, User $user)
+    public function update(Request $request, $username)
     {
-        $username = $user->username ?? $user->id;
-
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'username' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255',
-            'role' => 'required|in:admin,user',
-        ]);
-
-        // Check if new username is already taken by another user
-        if ($validated['username'] !== $username) {
-            $existingUser = User::findByUsername($validated['username']);
-            if ($existingUser) {
-                return redirect()->back()->withErrors(['error' => 'Username already exists']);
-            }
-        }
-
         $firebase = app(FirebaseService::class);
 
-        // Prepare update data
-        $updateData = [
-            'name' => $validated['name'],
+        $validated = $request->validate([
+            'fullName' => 'required|string|max:255',
+            'address' => 'required|string|max:255',
+            'birthDate' => 'required',
+            'gender' => 'required|in:Male,Female',
+            'email' => 'required|email',
+            'role' => 'required|in:admin,user',
+            'password' => 'nullable|min:8',
+        ]);
+
+        $data = [
+            'fullName' => $validated['fullName'],
+            'address' => $validated['address'],
+            'birthDate' => $validated['birthDate'],
+            'gender' => $validated['gender'],
             'email' => $validated['email'],
             'role' => $validated['role'],
         ];
 
-        // If username changed, delete old and create new
-        if ($validated['username'] !== $username) {
-            $firebase->deleteUser($username);
-            $result = $firebase->createUser($validated['username'], $updateData);
-        } else {
-            $result = $firebase->updateUser($username, $updateData);
+        if (!empty($validated['password'])) {
+            $data['password'] = $validated['password'];
         }
+
+        $result = $firebase->updateUser($username, $data);
 
         if ($result) {
-            return redirect()->back()->with('success', 'User updated successfully');
+            return back()->with('success', 'User updated successfully.');
         }
 
-        return redirect()->back()->withErrors(['error' => 'Failed to update user']);
+        return back()->withErrors([
+            'error' => 'Failed to update user.'
+        ]);
     }
 
-    public function destroy(User $user)
+    public function destroy($username)
     {
-        $username = $user->username ?? $user->id;
-        $currentUsername = Auth::user()->username ?? Auth::user()->id;
-
+        $currentUsername = session('user.username'); // or however you store the logged-in user
         if ($username === $currentUsername) {
-            return redirect()->back()->withErrors(['error' => 'Cannot delete yourself']);
+            return back()->withErrors([
+                'error' => 'You cannot delete yourself.'
+            ]);
         }
 
         $firebase = app(FirebaseService::class);
-        $result = $firebase->deleteUser($username);
 
-        if ($result) {
-            return redirect()->back()->with('success', 'User deleted successfully');
+        if ($firebase->deleteUser($username)) {
+            return back()->with('success', 'User deleted successfully.');
         }
 
-        return redirect()->back()->withErrors(['error' => 'Failed to delete user']);
+        return back()->withErrors([
+            'error' => 'Failed to delete user.'
+        ]);
     }
 }
