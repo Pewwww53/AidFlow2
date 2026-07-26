@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Controllers\Features;
+namespace App\Http\Controllers\PhoneFeatures;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 
-class FeaturesController extends Controller
+class PhoneFeaturesController extends Controller
 {
     public function __construct()
     {
@@ -13,6 +13,6 @@ class FeaturesController extends Controller
 
     public function index()
     {
-        return view('features.layout');
+        return view('phoneFeatures.index');
     }
 }

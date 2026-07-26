@@ -8,8 +8,11 @@ use App\Http\Controllers\Features\DashboardController;
 use App\Http\Controllers\Features\InventoryController;
 use App\Http\Controllers\Features\UsersController;
 use App\Http\Controllers\Features\QRCodeController;
-use App\Http\Controllers\Features\EvacuationController;
-
+use App\Http\Controllers\Features\EvacuationController as FeaturesEvacuationController;
+use App\Http\Controllers\PhoneFeatures\PhoneFeaturesController;
+use App\Http\Controllers\PhoneFeatures\AddInventoryController;
+use App\Http\Controllers\PhoneFeatures\EvacuationController as PhoneEvacuationController;
+use App\Http\Controllers\PhoneFeatures\ReliefGoodsController;
 // Authentication Routes
 Route::get('/', [LoginController::class, 'showLogin'])->name('login');
 Route::post('/login', [LoginController::class, 'login'])->name('login.post');
@@ -36,5 +39,12 @@ Route::middleware('firebase.auth')->group(function () {
     Route::get('/features/qr', [QRCodeController::class, 'index'])->name('qrcode.index');
     Route::post('/features/qr/scan', [QRCodeController::class, 'scan'])->name('qrcode.scan');
 
-    Route::get('/features/evacuation', [EvacuationController::class, 'index'])->name('evacuation.index');
+    Route::get('/features/evacuation', [FeaturesEvacuationController::class, 'index'])->name('evacuation.index');
+
+    Route::get('/phoneFeatures', [PhoneFeaturesController::class, 'index'])->name('phoneFeatures');
+    Route::get('/phoneFeatures/addInventory', [AddInventoryController::class, 'index'])->name('phoneFeatures.addInventory');
+    Route::post('/phoneFeatures/addInventory', [AddInventoryController::class, 'store'])->name('phoneFeatures.addInventory.store');
+    Route::get('/phoneFeatures/evacuation', [PhoneEvacuationController::class, 'index'])->name('phoneFeatures.evacuation');
+    Route::post('/phoneFeatures/evacuation/scan', [PhoneEvacuationController::class, 'scan'])->name('phoneFeatures.evacuation.scan');
+    Route::get('/phoneFeatures/reliefGoods', [ReliefGoodsController::class, 'index'])->name('phoneFeatures.reliefGoods');
 });

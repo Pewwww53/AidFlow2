@@ -548,7 +548,7 @@
 
                 const tbody = document.getElementById("barangayTentTable");
                 tbody.innerHTML = "";
-
+                
                 Object.keys(barangayList.find(b => b.code === info.code).tents)
                     .forEach(tentId => {
 
