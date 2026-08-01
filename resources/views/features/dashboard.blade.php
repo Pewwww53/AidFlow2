@@ -305,20 +305,20 @@
                     <div class="space-y-4 text-xs font-medium text-gray-800 flex-1">
                         <!-- Rice -->
                         <div class="flex items-center">
-                            <div class="w-[95px] flex items-center gap-2">
+                            <div class="w-23.75 flex items-center gap-2">
                                 <i class="fas fa-shopping-bag text-[#8a1c1c] text-sm"></i> Rice
                             </div>
-                            <div class="flex-1 bg-gray-200 h-[6px] rounded-full mx-2 overflow-hidden">
+                            <div class="flex-1 bg-gray-200 h-1.5 rounded-full mx-2 overflow-hidden">
                                 <div class="bg-[#cc2929] h-full w-[75%]"></div>
                             </div>
-                            <div class="w-[65px] text-right">420 sacks</div>
+                            <div class="w-16.25 text-right">420 sacks</div>
                         </div>
                         <!-- Canned Goods -->
                         <div class="flex items-center">
-                            <div class="w-[95px] flex items-center gap-2">
+                            <div class="w-23.75 flex items-center gap-2">
                                 <i class="fas fa-prescription-bottle text-[#8a1c1c] text-sm"></i> Canned Goods
                             </div>
-                            <div class="flex-1 bg-gray-200 h-[6px] rounded-full mx-2 overflow-hidden">
+                            <div class="flex-1 bg-gray-200 h-1.5 rounded-full mx-2 overflow-hidden">
                                 <div class="bg-[#cc2929] h-full w-[45%]"></div>
                             </div>
                             <div class="w-[65px] text-right">280 pcs</div>

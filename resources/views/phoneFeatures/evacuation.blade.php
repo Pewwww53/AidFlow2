@@ -3,139 +3,146 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>AidFlow | Evacuation Tent Scanner</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-</head>
+    <style>
+        #scanner { border: 0 !important; background: #fff; }
+        #scanner video { width: 100% !important; height: auto !important; object-fit: cover; }
+        #scanner__scan_region { min-height: 18rem; background: #030712; }
+        #scanner__dashboard { padding: 1rem; background: #fff; color: #374151; }
+        #scanner__dashboard select,
+        #scanner__dashboard button { max-width: 100%; margin: .35rem; border: 1px solid #d1d5db; border-radius: .75rem; padding: .65rem .85rem; background: #fff; color: #1f2937; }
+        #scanner__dashboard button { background: #dc2626; border-color: #dc2626; color: #fff; font-weight: 600; }
+        #scanner img[alt="Info icon"] { display: none; }
+        #scanner a { color: #b91c1c !important; }
+    </style></head>
 
-<body class="flex flex-col gap-4 min-h-screen bg-[#EFF2F3] text-[#1F1F1F] items-center">
-    <div class="flex flex-row gap-2 w-full h-50 bg-red-500 items-center p-4">
-        <img src="{{ asset('assets/CSWD.png') }}" alt="Logo" class="w-30 h-30 rounded-full">
+<body class="min-h-screen bg-[#EFF2F3] text-[#1F1F1F]">
+    <div class="flex w-full items-center gap-3 bg-red-500 px-4 py-3 sm:px-6">
+        <img src="{{ asset('assets/CSWD.png') }}" alt="Logo" class="h-14 w-14 shrink-0 rounded-full object-cover sm:h-20 sm:w-20">
         <div>
-            <h1 class="text-5xl font-bold text-white">AidFlow</h1>
-            <p class="text-lg text-gray-100">City Social Welfare and Development of San Juan City</p>
+            <h1 class="text-2xl font-bold leading-none text-white sm:text-4xl">AidFlow</h1>
+            <p class="mt-1 max-w-xl text-xs leading-snug text-red-50 sm:text-base">City Social Welfare and Development of San Juan City</p>
         </div>
     </div>
 
-    <main class="flex flex-col gap-6 w-full max-w-4xl p-4">
-        <div class="bg-white rounded-3xl shadow-lg p-6">
-            <h1 class="text-5xl font-bold text-black mb-4">Evacuation Tent Scanner</h1>
-            <p class="text-gray-700 mb-6">Scan tents to check occupancy and evacuation status quickly.</p>
+    <main class="mx-auto flex w-full max-w-4xl flex-col gap-5 p-3 sm:p-6">
+        <div class="rounded-3xl bg-white p-4 shadow-lg sm:p-7">
+            <h1 class="text-3xl font-bold leading-tight text-black sm:text-5xl">Evacuation Tent Scanner</h1>
+            <p class="mt-2 mb-5 text-base leading-relaxed text-gray-600 sm:text-lg">Scan tents to check occupancy and evacuation status quickly.</p>
 
             <div class="grid grid-cols-1 gap-6">
-                <div class="bg-gray-50 border border-gray-200 rounded-3xl p-6">
+                <div class="rounded-3xl border border-gray-200 bg-gray-50 p-4 sm:p-6">
                     <h2 class="text-xl font-semibold text-gray-900 mb-3">QR Scanner</h2>
                     <div
-                        class="relative mx-auto w-full max-w-xl h-80 rounded-3xl overflow-hidden bg-black shadow-inner">
-                        <div id="scanner" class="w-full h-full bg-black flex items-center justify-center text-gray-400">
+                        class="relative mx-auto w-full max-w-xl overflow-hidden rounded-2xl bg-black shadow-inner">
+                        <div id="scanner" class="w-full bg-white text-gray-600">
                             Scanner placeholder
                         </div>
-                        <div class="pointer-events-none absolute inset-0">
-                            <div class="absolute top-4 left-4 w-14 h-14 border-4 border-white rounded-2xl"></div>
-                            <div class="absolute top-4 right-4 w-14 h-14 border-4 border-white rounded-2xl"></div>
-                            <div class="absolute bottom-4 left-4 w-14 h-14 border-4 border-white rounded-2xl"></div>
-                            <div class="absolute bottom-4 right-4 w-14 h-14 border-4 border-white rounded-2xl"></div>
-                            <div class="absolute inset-x-0 top-1/2 h-0.5 bg-red-500 opacity-80 animate-pulse"></div>
-                        </div>
-                    </div>
-                    <p id="scanner-status" class="text-sm text-gray-200 mt-3">Align the QR code inside the frame for
-                        best results.</p>
-                </div>
 
-                <div class="bg-gray-50 border border-gray-200 rounded-3xl p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-3">Manual Tent Entry</h2>
-                    <form id="manual-scan-form" class="space-y-4">
-                        @csrf
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tent Number</label>
-                            <input id="tent-code" type="text" name="tent_code" placeholder="Enter tent number"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700 mb-2">Barangay Code</label>
-                            <input id="barangay-code" type="text" name="barangay_code" placeholder="Enter barangay code"
-                                class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500">
-                        </div>
-                        <button type="submit"
-                            class="w-full px-6 py-4 bg-red-600 text-white rounded-2xl text-2xl font-bold hover:bg-red-700 transition">
-                            <i class="fas fa-search mr-2"></i> Save Tent Scan
-                        </button>
-                    </form>
-                    <div id="scan-result" class="mt-4 text-sm font-medium text-green-600 hidden"></div>
+
+                    </div>
+                    <p id="scanner-status" class="mt-3 text-center text-sm text-gray-600">Align the QR code inside the frame for
+                        best results.</p>
+                    <div id="scan-result" role="status" aria-live="polite" class="mt-3 hidden text-center text-sm font-medium text-green-600"></div>
                 </div>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <a href="{{ route('phoneFeatures') }}"
-                class="block text-center px-4 py-4 bg-gray-100 rounded-3xl font-semibold text-gray-800 hover:bg-gray-200">
-                <i class="fas fa-arrow-left mr-2"></i> Back to Scanner Menu
-            </a>
-            <a href="{{ route('logout') }}"
-                class="block text-center px-4 py-4 bg-red-900 rounded-3xl font-semibold text-white hover:bg-red-800">
+        <a href="{{ route('phoneFeatures') }}"
+            class="block text-center px-4 py-4 bg-gray-100 rounded-3xl font-semibold text-gray-800 hover:bg-gray-200">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Home Page
+        </a>
+        <form method="POST" action="{{ route('logout') }}" class="w-full p-4 text-center">
+            @csrf
+            <button type="submit"
+                class="w-full px-4 py-3 bg-red-900 rounded-lg hover:bg-red-800 text-white font-bold text-2xl">
                 <i class="fas fa-sign-out-alt mr-2"></i> Logout
-            </a>
-        </div>
+            </button>
+        </form>
     </main>
 
-    <script>
+    <script type="module">
+        import { barangayList } from '/js/barangayList.js';
         const scanStatus = document.getElementById('scanner-status');
         const scanResult = document.getElementById('scan-result');
-        const form = document.getElementById('manual-scan-form');
-        const tentCodeInput = document.getElementById('tent-code');
-        const barangayCodeInput = document.getElementById('barangay-code');
+        let scanInProgress = false;
+        let lastScan = { code: null, time: 0 };
 
         function showMessage(message, isSuccess = true) {
             scanResult.classList.remove('hidden', 'text-green-600', 'text-red-600');
             scanResult.classList.add(isSuccess ? 'text-green-600' : 'text-red-600');
             scanResult.textContent = message;
-            scanResult.classList.remove('hidden');
         }
 
-        async function submitScan(tentCode, barangayCode = null) {
-            const response = await fetch('{{ route("phoneFeatures.evacuation.scan") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                },
-                body: JSON.stringify({ tent_code: tentCode, barangay_code: barangayCode })
-            });
+        function findBarangay(tentCode) {
+            return barangayList.find(barangay =>
+                Object.prototype.hasOwnProperty.call(barangay.tents, tentCode)
+            );
+        }
 
-            const data = await response.json();
-            if (data.success) {
-                showMessage(`Tent ${tentCode} recorded successfully.`);
-                tentCodeInput.value = tentCode;
-                if (barangayCode) {
-                    barangayCodeInput.value = barangayCode;
+        async function submitScan(tentCode, confirmUnoccupy = false) {
+            if (scanInProgress) return;
+            scanInProgress = true;
+
+            try {
+                const barangay = findBarangay(tentCode);
+                if (!barangay) {
+                    showMessage(`Tent ${tentCode} is not listed in barangayList.js.`, false);
+                    return;
                 }
-            } else {
-                showMessage('Unable to record scan.', false);
+
+                const response = await fetch('{{ route("phoneFeatures.evacuation.scan") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    },
+                    body: JSON.stringify({
+                        tent_code: tentCode,
+                        barangay_code: barangay.code,
+                        barangay_name: barangay.name,
+                        confirm_unoccupy: confirmUnoccupy
+                    })
+                });
+
+                const data = await response.json();
+                if (data.requires_confirmation) {
+                    if (window.confirm(data.message)) {
+                        scanInProgress = false;
+                        return submitScan(tentCode, true);
+                    }
+                    showMessage(`Tent ${tentCode} remains occupied.`, false);
+                } else if (data.success) {
+                    showMessage(data.message);
+                } else {
+                    showMessage(data.message || 'Unable to record scan.', false);
+                }
+            } catch (error) {
+                dd(error);
+                showMessage('Unable to connect to the server. Please try again.', false);
+            } finally {
+                scanInProgress = false;
             }
         }
-
-        form.addEventListener('submit', async function (event) {
-            event.preventDefault();
-            const tentCode = tentCodeInput.value.trim();
-            if (!tentCode) {
-                showMessage('Please enter a tent number.', false);
-                return;
-            }
-            await submitScan(tentCode, barangayCodeInput.value.trim() || null);
-        });
 
         function onScanSuccess(decodedText) {
-            const tentCode = decodedText.trim();
-            if (!tentCode) {
-                return;
-            }
+            const tentCode = decodedText.trim().toUpperCase();
+            if (!tentCode) return;
+
+            const now = Date.now();
+            if (lastScan.code === tentCode && now - lastScan.time < 2500) return;
+            lastScan = { code: tentCode, time: now };
+
             scanStatus.textContent = `Scanned: ${tentCode}`;
             submitScan(tentCode);
         }
 
         function onScanFailure() {
-            scanStatus.textContent = 'Unable to read QR code. Please try again.';
+            // Called repeatedly by the scanner while it searches for a QR code.
         }
 
         if (typeof Html5QrcodeScanner !== 'undefined') {

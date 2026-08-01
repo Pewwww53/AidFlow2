@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 
 class FirebaseService
 {
@@ -91,6 +92,29 @@ class FirebaseService
         return $this->get('occupiedTents');
     }
 
+    public function getOccupiedTent(string $tentCode): ?array
+    {
+        $response = Http::get(
+            "{$this->databaseUrl}/occupiedTents/".rawurlencode($tentCode).'.json'
+        );
+        $tent = $response->successful() ? $response->json() : null;
+
+        return is_array($tent) ? $tent : null;
+    }
+
+    public function recordTentScan(string $tentCode, array $data, bool $occupied): bool
+    {
+        $event = $data;
+        $event['action'] = $occupied ? 'occupied' : 'unoccupied';
+        $eventKey = (string) Str::uuid();
+
+        $response = Http::patch("{$this->databaseUrl}/.json", [
+            "scanEvents/{$eventKey}" => $event,
+            'occupiedTents/'.$tentCode => $occupied ? $data : null,
+        ]);
+
+        return $response->successful();
+    }
     /**
      * Get all users from Firebase
      */

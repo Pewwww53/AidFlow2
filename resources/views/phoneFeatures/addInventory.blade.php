@@ -90,10 +90,16 @@
         </form>
 
         <a href="{{ route('phoneFeatures') }}"
-            class="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full border border-black bg-transparent px-6 py-4 text-xl font-semibold text-black hover:bg-gray-100 transition">
-            <i class="fas fa-arrow-left"></i>
-            Back to home page
+            class="block text-center px-4 py-4 bg-gray-100 rounded-3xl font-semibold text-gray-800 hover:bg-gray-200">
+            <i class="fas fa-arrow-left mr-2"></i> Back to Home Page
         </a>
+        <form method="POST" action="{{ route('logout') }}" class="w-full p-4 text-center">
+            @csrf
+            <button type="submit"
+                class="w-full px-4 py-3 bg-red-900 rounded-lg hover:bg-red-800 text-white font-bold text-2xl">
+                <i class="fas fa-sign-out-alt mr-2"></i> Logout
+            </button>
+        </form>
     </main>
     </div>
 </body>

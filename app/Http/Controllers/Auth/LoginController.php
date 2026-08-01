@@ -13,7 +13,7 @@ class LoginController extends Controller
     public function showLogin()
     {
         if (session()->has('user')) {
-            return redirect()->route('dashboard');
+            return $this->redirectForRole(session('user.role'));
         }
 
         return view('auth.login');
@@ -47,7 +47,7 @@ class LoginController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->route('phoneFeatures');
+        return $this->redirectForRole($account['role'] ?? null);
     }
 
     public function logout(Request $request)
@@ -57,5 +57,10 @@ class LoginController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    private function redirectForRole(?string $role)
+    {
+        return redirect()->route($role === 'admin' ? 'dashboard' : 'phoneFeatures');
     }
 }
