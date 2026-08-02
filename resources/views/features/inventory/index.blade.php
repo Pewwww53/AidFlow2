@@ -277,43 +277,50 @@
                 </div>
             </div>
             <div class="p-6">
-                <div class="flex flex-wrap gap-3">
-                    <button type="button" class="batch-tab px-4 py-2 text-red-700 font-semibold">Batch
-                        1</button>
-                </div>
-
-                <div class="overflow-hidden rounded border border-red-600 bg-[#ffdfe1] shadow-sm">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm text-left">
-                            <thead class="text-red-700">
-                                <tr>
-                                    <th class="px-5 py-4">Item</th>
-                                    <th class="px-5 py-4">Category</th>
-                                    <th class="px-5 py-4">Quantity</th>
-                                    <th class="px-5 py-4">Exp Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($inventoryItems as $item)
-                                    <tr class="border-t border-red-100">
-                                        <td class="px-5 py-4 text-gray-900">{{ $item['name'] ?? 'Unnamed Item' }}</td>
-                                        <td class="px-5 py-4 text-gray-900">{{ $item['category'] ?? 'Uncategorized' }}</td>
-                                        <td class="px-5 py-4 text-gray-900">{{ $item['stock'] ?? 0 }}</td>
-                                        <td class="px-5 py-4 text-gray-900">
-                                            {{ $item['expirationDate'] ? \Carbon\Carbon::parse($item['expirationDate'])->format('m/d/y') : '—' }}
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="px-5 py-8 text-center text-gray-500">No items available for this
-                                            batch.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                @if ($batchGroups->isNotEmpty())
+                    <div class="mb-4 flex flex-wrap gap-3" role="tablist" aria-label="Inventory batches">
+                        @foreach ($batchGroups as $batchName => $batchItems)
+                            <button type="button" role="tab" data-batch-target="batch-panel-{{ $loop->index }}"
+                                class="batch-tab rounded-full px-4 py-2 {{ $loop->first ? 'bg-red-700 text-white font-semibold' : 'bg-red-50 text-red-700' }}">
+                                Batch {{ $batchName }} ({{ $batchItems->count() }})
+                            </button>
+                        @endforeach
                     </div>
-                </div>
 
+                    @foreach ($batchGroups as $batchName => $batchItems)
+                        <div id="batch-panel-{{ $loop->index }}"
+                            class="batch-panel {{ $loop->first ? '' : 'hidden' }} overflow-hidden rounded border border-red-600 bg-[#ffdfe1] shadow-sm">
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full text-sm text-left">
+                                    <thead class="text-red-700">
+                                        <tr>
+                                            <th class="px-5 py-4">Item</th>
+                                            <th class="px-5 py-4">Category</th>
+                                            <th class="px-5 py-4">Quantity</th>
+                                            <th class="px-5 py-4">Exp Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach ($batchItems as $item)
+                                            <tr class="border-t border-red-100">
+                                                <td class="px-5 py-4 text-gray-900">{{ $item['name'] ?? 'Unnamed Item' }}</td>
+                                                <td class="px-5 py-4 text-gray-900">{{ $item['category'] ?? 'Uncategorized' }}</td>
+                                                <td class="px-5 py-4 text-gray-900">{{ $item['stock'] ?? 0 }}</td>
+                                                <td class="px-5 py-4 text-gray-900">
+                                                    {{ !empty($item['expirationDate']) ? \Carbon\Carbon::parse($item['expirationDate'])->format('m/d/y') : '�' }}
+                                                </td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    @endforeach
+                @else
+                    <div class="rounded border border-red-200 bg-red-50 px-5 py-8 text-center text-gray-600">
+                        No batched inventory items yet. Add an item and choose or create a batch.
+                    </div>
+                @endif
                 <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
                     <button type="button" id="batchSaveBtn"
                         class="cursor-pointer inline-flex items-center justify-center rounded-full bg-red-700 px-6 py-3 text-white font-semibold transition hover:bg-red-800">Save</button>
@@ -337,6 +344,7 @@
             const batchCloseBtn = document.getElementById('batchCloseBtn');
             const batchSaveBtn = document.getElementById('batchSaveBtn');
             const batchTabButtons = document.querySelectorAll('.batch-tab');
+            const batchPanels = document.querySelectorAll('.batch-panel');
 
             function openExpiredModal() {
                 expiredModal.classList.remove('hidden');
@@ -378,12 +386,17 @@
                 }
             });
 
-            batchTabButtons?.forEach((button) => {
+            batchTabButtons.forEach((button) => {
                 button.addEventListener('click', () => {
-                    batchTabButtons.forEach((btn) => {
-                        btn.classList.remove('font-semibold');
+                    batchTabButtons.forEach((tab) => {
+                        tab.classList.remove('bg-red-700', 'text-white', 'font-semibold');
+                        tab.classList.add('bg-red-50', 'text-red-700');
                     });
-                    button.classList.add('font-semibold');
+                    batchPanels.forEach((panel) => panel.classList.add('hidden'));
+
+                    button.classList.remove('bg-red-50', 'text-red-700');
+                    button.classList.add('bg-red-700', 'text-white', 'font-semibold');
+                    document.getElementById(button.dataset.batchTarget)?.classList.remove('hidden');
                 });
             });
         </script>

@@ -237,16 +237,15 @@
                             </thead>
                             <tbody>
                                 @forelse($recentScannedTents->take(6) as $scan)
-                                                        <tr>
-                                                            <td class="px-3 py-1 text-gray-700">
-                                                                {{ !empty($scan['scannedAt']) ?
-                                    \Carbon\Carbon::parse($scan['scannedAt'])->format('m/d/y') : date('m/d/y') }}
-                                                            </td>
-                                                            <td class="px-3 py-1 text-gray-700">{{ $scan['tentCode'] ?? 'T-001' }}</td>
-                                                            <td class="px-3 py-1 text-gray-700">
-                                                                {{ $scan['barangay'] ?? $scan['barangayName'] ?? 'Balong Bato' }}
-                                                            </td>
-                                                        </tr>
+                                    <tr>
+                                        <td class="px-3 py-1 text-gray-700">
+                                            {{ !empty($scan['scannedAt']) ? \Carbon\Carbon::parse($scan['scannedAt'])->format('m/d/y') : date('m/d/y') }}
+                                        </td>
+                                        <td class="px-3 py-1 text-gray-700">{{ $scan['tentCode'] ?? 'T-001' }}</td>
+                                        <td class="px-3 py-1 text-gray-700">
+                                            {{ $scan['barangay'] ?? $scan['barangayName'] ?? 'Balong Bato' }}
+                                        </td>
+                                    </tr>
                                 @empty
                                     <tr>
                                         <td class="px-3 py-1 text-gray-700">06/15/26</td>

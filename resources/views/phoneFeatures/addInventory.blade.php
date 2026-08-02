@@ -32,6 +32,15 @@
                     {{ session('success') }}
                 </div>
             @endif
+            @if ($errors->any())
+                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    <ul class="list-disc pl-5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
             <div>
                 <label for="item_name" class="ml-4 font-bold">Item Name</label>
                 <input id="item_name" name="item_name" type="text" placeholder="Item Name" required
@@ -63,6 +72,7 @@
                     class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg text-[#1F1F1F] focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100">
                     <option value="" disabled selected>Unit of Measurement</option>
                     <option>Piece</option>
+                    <option>Can</option>
                     <option>Box</option>
                     <option>Pack</option>
                     <option>Litre</option>
@@ -70,6 +80,35 @@
                 </select>
             </div>
 
+            <fieldset class="space-y-3">
+                <legend class="ml-4 font-bold">Batch</legend>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex cursor-pointer items-center gap-2 rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4">
+                        <input type="radio" name="batch_option" value="existing"
+                            {{ old('batch_option', $batches->isNotEmpty() ? 'existing' : 'new') === 'existing' ? 'checked' : '' }}>
+                        Existing batch
+                    </label>
+                    <label class="flex cursor-pointer items-center gap-2 rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4">
+                        <input type="radio" name="batch_option" value="new"
+                            {{ old('batch_option', $batches->isNotEmpty() ? 'existing' : 'new') === 'new' ? 'checked' : '' }}>
+                        New batch
+                    </label>
+                </div>
+                <div id="existingBatchFields">
+                    <select id="batch" name="batch" aria-label="Choose batch"
+                        class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100">
+                        <option value="">Choose a batch</option>
+                        @foreach ($batches as $batch)
+                            <option value="{{ $batch }}" {{ old('batch') === $batch ? 'selected' : '' }}>{{ $batch }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div id="newBatchFields" class="hidden">
+                    <input id="new_batch" name="new_batch" type="text" value="{{ old('new_batch') }}"
+                        aria-label="New batch name" placeholder="New batch name or number"
+                        class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100">
+                </div>
+            </fieldset>
             <div class="grid gap-4 md:grid-cols-2">
                 <div>
                     <label for="date_received" class="ml-4 font-bold">Date Received</label>
@@ -102,6 +141,24 @@
         </form>
     </main>
     </div>
+    <script>
+        const batchOptions = document.querySelectorAll('input[name="batch_option"]');
+        const existingBatchFields = document.getElementById('existingBatchFields');
+        const newBatchFields = document.getElementById('newBatchFields');
+        const batchSelect = document.getElementById('batch');
+        const newBatchInput = document.getElementById('new_batch');
+
+        function updateBatchFields() {
+            const useNewBatch = document.querySelector('input[name="batch_option"]:checked')?.value === 'new';
+            existingBatchFields.classList.toggle('hidden', useNewBatch);
+            newBatchFields.classList.toggle('hidden', !useNewBatch);
+            batchSelect.required = !useNewBatch;
+            newBatchInput.required = useNewBatch;
+        }
+
+        batchOptions.forEach(option => option.addEventListener('change', updateBatchFields));
+        updateBatchFields();
+    </script>
 </body>
 
 </html>

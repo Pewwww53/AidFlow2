@@ -98,7 +98,7 @@
                                 </tr>
                             </thead>
                             <tbody id="evacuationTableBody">
-                                @forelse($recentScannedTents as $scan)
+                                @forelse($occupancyData as $scan)
                                     @php
                                         $scanDate = !empty($scan['scannedAt']) ? \Carbon\Carbon::parse($scan['scannedAt'])->format('m/d/Y') : date('m/d/Y');
                                         $tentCode = $scan['tentCode'] ?? $scan['tent_id'] ?? 'T-001';
@@ -302,8 +302,8 @@
 
     @push('scripts')
         @php
-            $tableRows = $recentScannedTents->isNotEmpty()
-                ? $recentScannedTents->map(function ($scan) {
+            $tableRows = $occupiedTents->isNotEmpty()
+                ? $occupiedTents->map(function ($scan) {
                     return [
                         'date' => !empty($scan['scannedAt'])
                             ? \Carbon\Carbon::parse($scan['scannedAt'])->format('m/d/Y')
@@ -342,13 +342,7 @@
             const tableBody = document.getElementById('evacuationTableBody');
 
             const renderTable = (rows) => {
-                tableBody.innerHTML = rows.map(row => `
-                                                                                                                                                                                                                                                <tr class="border-b border-gray-200 last:border-0">
-                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.date}</td>
-                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.tentId}</td>
-                                                                                                                                                                                                                                                <td class="px-3 py-3 whitespace-nowrap">${row.barangay}</td>
-                                                                                                                                                                                                                                                </tr>
-                                                                                                                                                                                                                        `).join('');
+                tableBody.innerHTML = rows.map(row => `<tr class="border-b border-gray-200 last:border-0"><td class="px-3 py-3 whitespace-nowrap">${row.date}</td><td class="px-3 py-3 whitespace-nowrap">${row.tentId}</td><td class="px-3 py-3 whitespace-nowrap">${row.barangay}</td></tr>`).join('');
             };
 
             const applyFilters = () => {
@@ -548,22 +542,22 @@
 
                 const tbody = document.getElementById("barangayTentTable");
                 tbody.innerHTML = "";
-                
+
                 Object.keys(barangayList.find(b => b.code === info.code).tents)
                     .forEach(tentId => {
 
                         const occupied = occupiedTents.find(t => t.tentId === tentId);
 
                         tbody.innerHTML += `
-                <tr>
-                    <td>${occupied?.date ?? "--"}</td>
-                    <td>${tentId}</td>
-                    <td class="${occupied ? "text-red-500" : "text-green-500"
+                                                                <tr>
+                                                                    <td>${occupied?.date ?? "--"}</td>
+                                                                    <td>${tentId}</td>
+                                                                    <td class="${occupied ? "text-red-500" : "text-green-500"
                             }">
-                        ${occupied ? "Occupied" : "Available"}
-                    </td>
-                </tr>
-            `;
+                                                                        ${occupied ? "Occupied" : "Available"}
+                                                                    </td>
+                                                                </tr>
+                                                            `;
                     });
 
                 modal.classList.remove("hidden");

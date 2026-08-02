@@ -12,9 +12,17 @@ class AddInventoryController extends Controller
     {
     }
 
-    public function index()
+    public function index(FirebaseService $firebase)
     {
-        return view('phoneFeatures.addInventory');
+        $inventory = $firebase->getInventory();
+        $batches = collect(is_array($inventory) ? $inventory : [])
+            ->filter(fn ($item) => is_array($item) && filled($item['batch'] ?? null))
+            ->pluck('batch')
+            ->map(fn ($batch) => (string) $batch)
+            ->unique()
+            ->values();
+
+        return view('phoneFeatures.addInventory', compact('batches'));
     }
 
     public function store(Request $request, FirebaseService $firebase)
@@ -30,7 +38,14 @@ class AddInventoryController extends Controller
             'received' => 'nullable|date|required_without:date_received',
             'expiration_date' => 'nullable|date|required_without:expirationDate',
             'expirationDate' => 'nullable|date|required_without:expiration_date',
+            'batch_option' => 'required|in:existing,new',
+            'batch' => 'nullable|string|max:100|required_if:batch_option,existing',
+            'new_batch' => 'nullable|string|max:100|required_if:batch_option,new',
         ]);
+
+        $batch = trim($validated['batch_option'] === 'new'
+            ? $validated['new_batch']
+            : $validated['batch']);
 
         $payload = [
             'name' => $validated['item_name'] ?? $validated['name'] ?? null,
@@ -39,6 +54,7 @@ class AddInventoryController extends Controller
             'stock' => (int) ($validated['quantity'] ?? $validated['stock'] ?? 0),
             'received' => $validated['date_received'] ?? $validated['received'] ?? null,
             'expirationDate' => $validated['expiration_date'] ?? $validated['expirationDate'] ?? null,
+            'batch' => $batch,
         ];
 
         $firebase->createInventory($payload);

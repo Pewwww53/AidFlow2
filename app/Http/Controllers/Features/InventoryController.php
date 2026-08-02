@@ -27,6 +27,10 @@ class InventoryController extends Controller
     public function index(Request $request, FirebaseService $firebase)
     {
         $inventoryItems = $this->normalizeInventoryItems($firebase->getInventory());
+        $batchGroups = $inventoryItems
+            ->filter(fn ($item) => filled($item['batch'] ?? null))
+            ->groupBy(fn ($item) => (string) $item['batch'])
+            ->sortKeysUsing('strnatcasecmp');
 
         if ($request->filled('search')) {
             $search = mb_strtolower($request->search);
@@ -99,6 +103,7 @@ class InventoryController extends Controller
 
         return view('features.inventory.index', compact(
             'inventoryItems',
+            'batchGroups',
             'totalItems',
             'lowStockItems',
             'goodItems',

@@ -27,6 +27,7 @@ class EvacuationController extends Controller
         return view('features.evacuation.index', [
             'recentScannedTents' => $recentScannedTents,
             'occupiedTentsCount' => $occupiedTents->count(),
+            'occupiedTents' => $occupiedTents,
             'barangayCount' => count($occupancyData),
             'occupancyData' => $occupancyData,
         ]);
