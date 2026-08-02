@@ -11,6 +11,14 @@
             "dest": "/public/build/$1"
         },
         {
+            "src": "/(assets|js|geojson)/(.*)",
+            "dest": "/public/$1/$2"
+        },
+        {
+            "src": "/(favicon\\.ico|robots\\.txt|evacuation_map\\.png)",
+            "dest": "/public/$1"
+        },
+        {
             "src": "/(.*)",
             "dest": "/api/index.php"
         }
