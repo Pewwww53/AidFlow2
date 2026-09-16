@@ -17,15 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->report(function (\Throwable $exception): void {
-            error_log((string) $exception);
-        });
-
-        $exceptions->render(function (\Throwable $exception) {
-            return new \Symfony\Component\HttpFoundation\Response(
-                (string) $exception,
-                500,
-                ['Content-Type' => 'text/plain']
-            );
-        });
+        $exceptions->shouldRenderJsonWhen(
+            fn(Request $request) => $request->is('api/*'),
+        );
     })->create();
