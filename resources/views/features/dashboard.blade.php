@@ -120,83 +120,7 @@
                                         </td>
                                     </tr>
                                 @empty
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">06/15/26</td>
-                                        <td class="px-3 py-1.5 text-green-500">Stock-In</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Rice</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">15 Sacks</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">06/10/26</td>
-                                        <td class="px-3 py-1.5 text-green-500">Stock-In</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Noodles</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">67 Box</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">05/15/26</td>
-                                        <td class="px-3 py-1.5 text-red-500">Stock-Out</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Rice</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">35 Sacks</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">05/15/26</td>
-                                        <td class="px-3 py-1.5 text-red-500">Stock-Out</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Sardines</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">15 Box</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">05/15/26</td>
-                                        <td class="px-3 py-1.5 text-green-500">Stock-In</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Rice</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">35 Sacks</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">05/15/26</td>
-                                        <td class="px-3 py-1.5 text-green-500">Stock-In</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Sardines</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">15 Sacks</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">05/15/26</td>
-                                        <td class="px-3 py-1.5 text-green-500">Stock-In</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Sleeping kit</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Non-Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">18 Kits</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">05/15/26</td>
-                                        <td class="px-3 py-1.5 text-green-500">Stock-In</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Kitchen kit</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Non-Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">15 Kits</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">04/15/26</td>
-                                        <td class="px-3 py-1.5 text-red-500">Stock-Out</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Noodles</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">15 Box</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">04/15/26</td>
-                                        <td class="px-3 py-1.5 text-red-500">Stock-Out</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Sleeping kit</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Non-Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">15 Kits</td>
-                                    </tr>
-                                    <tr>
-                                        <td class="px-3 py-1.5 text-gray-700">04/15/26</td>
-                                        <td class="px-3 py-1.5 text-red-500">Stock-Out</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Kitchen kit</td>
-                                        <td class="px-3 py-1.5 text-gray-700">Non-Food</td>
-                                        <td class="px-3 py-1.5 text-gray-700 text-right">15 Kits</td>
-                                    </tr>
+
                                 @endforelse
                             </tbody>
                         </table>
@@ -283,65 +207,43 @@
                 <div class="mb-5">
                     <p class="text-gray-900 text-sm mb-1">Predicted Family Head Count</p>
                     <div class="flex items-center gap-6">
-                        <span class="text-4xl font-bold text-[#cc2929]">78 - 92</span>
-                        <span class="text-green-600 font-medium text-sm flex items-center"><i
-                                class="fas fa-arrow-up mr-1 text-xs"></i> 16%</span>
+                        <span class="text-4xl font-bold text-[#cc2929]">{{ number_format($forecastFamilyHeads) }}</span>
                     </div>
                 </div>
 
                 <div class="mb-6 border-t border-gray-200 pt-5">
-                    <p class="text-gray-900 text-sm mb-1">Estimated Standard Relief Packs Needed</p>
+                    <p class="text-gray-900 text-sm mb-1">Estimated Family Food Packs Needed</p>
                     <div class="flex items-center gap-6">
-                        <span class="text-4xl font-bold text-[#cc2929]">320 - 360</span>
-                        <span class="text-green-600 font-medium text-sm flex items-center"><i
-                                class="fas fa-arrow-up mr-1 text-xs"></i> 17%</span>
+                        <span class="text-4xl font-bold text-[#cc2929]">{{ number_format($forecastFfp) }}</span>
                     </div>
                 </div>
 
                 <div class="border-t border-gray-200 pt-5 flex-1 flex flex-col">
-                    <p class="text-gray-900 text-sm mb-5">Top Needed Items (Forecast)</p>
+                    <p class="text-gray-900 text-sm mb-4">Audit Logs</p>
 
-                    <div class="space-y-4 text-xs font-medium text-gray-800 flex-1">
-                        <!-- Rice -->
-                        <div class="flex items-center">
-                            <div class="w-23.75 flex items-center gap-2">
-                                <i class="fas fa-shopping-bag text-[#8a1c1c] text-sm"></i> Rice
+                    <div class="space-y-3 text-xs text-gray-700 flex-1">
+                        @forelse($auditLogs as $log)
+                            @php
+                                $timestamp = $log['timestamp'] ?? null;
+                                $formattedTime = $timestamp ? \Carbon\Carbon::parse($timestamp)->format('M d • h:i A') : 'Unknown time';
+                                $meta = $log['type'] === 'reliefPackScan'
+                                    ? 'Pack #' . ($log['packNumber'] ?? '')
+                                    : ($log['tentCode'] ?? 'N/A') . ($log['barangayName'] ? ' • ' . $log['barangayName'] : '');
+                            @endphp
+
+                            <div class="flex items-start gap-2 pb-2 border-b border-gray-200 last:border-b-0 last:pb-0">
+                                <span class="mt-1 h-2.5 w-2.5 rounded-full {{ $log['color'] ?? 'bg-blue-500' }}"></span>
+                                <div class="flex-1">
+                                    <p class="font-semibold text-gray-800">{{ $log['label'] ?? 'System event' }}</p>
+                                    @if($meta)
+                                        <p class="text-[11px] text-gray-500">{{ $meta }}</p>
+                                    @endif
+                                    <p class="text-[11px] text-gray-500">{{ $formattedTime }}</p>
+                                </div>
                             </div>
-                            <div class="flex-1 bg-gray-200 h-1.5 rounded-full mx-2 overflow-hidden">
-                                <div class="bg-[#cc2929] h-full w-[75%]"></div>
-                            </div>
-                            <div class="w-16.25 text-right">420 sacks</div>
-                        </div>
-                        <!-- Canned Goods -->
-                        <div class="flex items-center">
-                            <div class="w-23.75 flex items-center gap-2">
-                                <i class="fas fa-prescription-bottle text-[#8a1c1c] text-sm"></i> Canned Goods
-                            </div>
-                            <div class="flex-1 bg-gray-200 h-1.5 rounded-full mx-2 overflow-hidden">
-                                <div class="bg-[#cc2929] h-full w-[45%]"></div>
-                            </div>
-                            <div class="w-[65px] text-right">280 pcs</div>
-                        </div>
-                        <!-- Water -->
-                        <div class="flex items-center">
-                            <div class="w-[95px] flex items-center gap-2">
-                                <i class="fas fa-tint text-[#3b82f6] text-sm"></i> Water
-                            </div>
-                            <div class="flex-1 bg-gray-200 h-[6px] rounded-full mx-2 overflow-hidden">
-                                <div class="bg-[#cc2929] h-full w-[90%]"></div>
-                            </div>
-                            <div class="w-[65px] text-right">600 bottles</div>
-                        </div>
-                        <!-- Hygiene Kits -->
-                        <div class="flex items-center">
-                            <div class="w-[95px] flex items-center gap-2">
-                                <i class="fas fa-pump-soap text-[#10b981] text-sm"></i> Hygiene Kits
-                            </div>
-                            <div class="flex-1 bg-gray-200 h-[6px] rounded-full mx-2 overflow-hidden">
-                                <div class="bg-[#cc2929] h-full w-[35%]"></div>
-                            </div>
-                            <div class="w-[65px] text-right">210 kits</div>
-                        </div>
+                        @empty
+                            <p class="text-xs text-gray-500">No audit logs available.</p>
+                        @endforelse
                     </div>
                 </div>
             </div>

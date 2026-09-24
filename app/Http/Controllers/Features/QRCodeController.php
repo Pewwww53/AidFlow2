@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Features;
 use App\Http\Controllers\Controller;
 use App\Models\ScanEvent;
 use App\Models\OccupiedTent;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,6 +19,28 @@ class QRCodeController extends Controller
     public function index()
     {
         return view('features.qrcode.index');
+    }
+
+    public function nextReliefPack(FirebaseService $firebase)
+    {
+        $number = $firebase->getNextReliefPackNumber();
+
+        return response()->json([
+            'success' => true,
+            'number' => $number,
+            'label' => "Relief Pack: #{$number}",
+        ]);
+    }
+
+    public function reserveReliefPack(FirebaseService $firebase)
+    {
+        $number = $firebase->reserveNextReliefPackNumber();
+
+        return response()->json([
+            'success' => true,
+            'number' => $number,
+            'label' => "Relief Pack: #{$number}",
+        ]);
     }
 
     public function scan(Request $request)

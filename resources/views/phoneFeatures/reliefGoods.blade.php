@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>AidFlow | Relief Goods Scanner</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -102,22 +103,50 @@
 
     <script>
         const scannerStatus = document.getElementById('scanner-status');
+        const reliefScanUrl = @json(route('phoneFeatures.reliefGoods.scan', absolute: false));
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         let lastScannedCode = null;
         let lastScannedAt = 0;
+        let isSubmitting = false;
 
-        function onScanSuccess(decodedText) {
+        async function onScanSuccess(decodedText) {
             const packageId = decodedText.trim();
             const now = Date.now();
 
-            if (!packageId || (packageId === lastScannedCode && now - lastScannedAt < 2000)) {
+            if (!/^#\d+$/.test(packageId) || isSubmitting ||
+                (packageId === lastScannedCode && now - lastScannedAt < 2000)) {
                 return;
             }
 
             lastScannedCode = packageId;
             lastScannedAt = now;
-            scannerStatus.textContent = `Package scanned: ${packageId}`;
+            isSubmitting = true;
+            scannerStatus.textContent = `Processing relief pack ${packageId}...`;
             scannerStatus.classList.remove('text-gray-600', 'text-red-600');
-            scannerStatus.classList.add('font-medium', 'text-green-600');
+            scannerStatus.classList.add('font-medium', 'text-blue-600');
+
+            try {
+                const response = await fetch(reliefScanUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                    },
+                    body: JSON.stringify({ package_id: packageId }),
+                });
+                const result = await response.json();
+
+                scannerStatus.textContent = result.message || 'Relief pack processed.';
+                scannerStatus.classList.remove('text-blue-600', 'text-red-600');
+                scannerStatus.classList.add(response.ok ? 'text-green-600' : 'text-red-600');
+            } catch (error) {
+                scannerStatus.textContent = error;
+                scannerStatus.classList.remove('text-blue-600', 'text-green-600');
+                scannerStatus.classList.add('text-red-600');
+            } finally {
+                isSubmitting = false;
+            }
         }
 
         function onScanFailure() {

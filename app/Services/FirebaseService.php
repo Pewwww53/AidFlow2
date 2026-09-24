@@ -77,6 +77,105 @@ class FirebaseService
         return $this->get('relief_packs');
     }
 
+    public function consumeReliefPack(int $packNumber, array $requiredItems): array
+    {
+        $scanPath = "reliefPackScans/{$packNumber}";
+        $existingScan = $this->get($scanPath);
+
+        if (is_array($existingScan) && !empty($existingScan['scanned_at'])) {
+            return ['status' => 'already_scanned'];
+        }
+
+        $inventory = $this->getInventory();
+        $inventory = is_array($inventory) ? $inventory : [];
+        $itemsByName = [];
+
+        foreach ($inventory as $id => $item) {
+            if (is_array($item) && filled($item['name'] ?? null)) {
+                $itemsByName[mb_strtolower(trim($item['name']))][] = [$id, $item];
+            }
+        }
+
+        foreach ($requiredItems as $name => $quantity) {
+            $available = collect($itemsByName[mb_strtolower(trim($name))] ?? [])
+                ->sum(fn($entry) => (int) ($entry[1]['stock'] ?? 0));
+
+            if ($available < $quantity) {
+                return [
+                    'status' => 'insufficient_stock',
+                    'item' => $name,
+                    'required' => $quantity,
+                    'available' => $available,
+                ];
+            }
+        }
+
+        $updates = [];
+
+        foreach ($requiredItems as $name => $quantity) {
+            $remaining = $quantity;
+            foreach ($itemsByName[mb_strtolower(trim($name))] ?? [] as [$id, $item]) {
+                if ($remaining <= 0) {
+                    break;
+                }
+
+                $stock = (int) ($item['stock'] ?? 0);
+                $deduction = min($stock, $remaining);
+                $remaining -= $deduction;
+                $newStock = $stock - $deduction;
+                $updates["inventory/{$id}"] = $newStock > 0
+                    ? array_merge($item, ['stock' => $newStock])
+                    : null;
+            }
+        }
+
+        $updates[$scanPath] = [
+            'pack_number' => $packNumber,
+            'scanned_at' => now()->toIso8601String(),
+        ];
+
+        $response = Http::withoutVerifying()->patch("{$this->databaseUrl}/.json", $updates);
+
+        return $response->successful()
+            ? ['status' => 'consumed']
+            : ['status' => 'failed'];
+    }
+
+    public function getNextReliefPackNumber(): int
+    {
+        $counter = $this->get('auditLogs/relief_pack_counter');
+
+        if (is_array($counter) && isset($counter['next_number'])) {
+            return max(1, (int) $counter['next_number']);
+        }
+
+        return 1;
+    }
+
+    public function reserveNextReliefPackNumber(): int
+    {
+        $nextNumber = $this->getNextReliefPackNumber();
+        $issuedAt = now()->toIso8601String();
+
+        $eventKey = 'relief_pack_' . now()->format('YmdHis') . '_' . Str::random(6);
+
+        Http::withoutVerifying()->patch("{$this->databaseUrl}/.json", [
+            "auditLogs/{$eventKey}" => [
+                'type' => 'relief_pack',
+                'pack_number' => $nextNumber,
+                'label' => "Relief Pack: #{$nextNumber}",
+                'generated_at' => $issuedAt,
+            ],
+            'auditLogs/relief_pack_counter' => [
+                'next_number' => $nextNumber + 1,
+                'last_number' => $nextNumber,
+                'updated_at' => $issuedAt,
+            ],
+        ]);
+
+        return $nextNumber;
+    }
+
     public function getTents()
     {
         return $this->get('tents');
@@ -87,6 +186,11 @@ class FirebaseService
         return $this->get('scanEvents');
     }
 
+    public function getReliefPackScans()
+    {
+        return $this->get('reliefPackScans');
+    }
+
     public function getOccupiedTents()
     {
         return $this->get('occupiedTents');
@@ -95,7 +199,7 @@ class FirebaseService
     public function getOccupiedTent(string $tentCode): ?array
     {
         $response = Http::get(
-            "{$this->databaseUrl}/occupiedTents/".rawurlencode($tentCode).'.json'
+            "{$this->databaseUrl}/occupiedTents/" . rawurlencode($tentCode) . '.json'
         );
         $tent = $response->successful() ? $response->json() : null;
 
@@ -110,7 +214,7 @@ class FirebaseService
 
         $response = Http::patch("{$this->databaseUrl}/.json", [
             "scanEvents/{$eventKey}" => $event,
-            'occupiedTents/'.$tentCode => $occupied ? $data : null,
+            'occupiedTents/' . $tentCode => $occupied ? $data : null,
         ]);
 
         return $response->successful();

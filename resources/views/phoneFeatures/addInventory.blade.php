@@ -43,8 +43,38 @@
             @endif
             <div>
                 <label for="item_name" class="ml-4 font-bold">Item Name</label>
-                <input id="item_name" name="item_name" type="text" placeholder="Item Name" required
-                    class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg text-[#1F1F1F] placeholder:text-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100" />
+                <select id="item_name" name="item_name" required
+                    class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg text-[#1F1F1F] focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100">
+                    <option value="" disabled {{ old('item_name') ? '' : 'selected' }}>Item Name</option>
+                    @foreach ([
+                        'Toothbrush',
+                        'Toothpaste',
+                        'Shampoo',
+                        'Bath Bar Soap',
+                        'Laundry Bar Soap',
+                        'Sanitary Napkin',
+                        'Comb',
+                        'Disposable Shaving Razor',
+                        'Nail Cutter',
+                        'Bathroom Dipper',
+                        '20L Square Plastic Bucket with Deep Cover and Plastic Handle',
+                        'Blanket',
+                        'Mosquito Net',
+                        'Mat',
+                        'Kitchen Utensils',
+                        'Rice',
+                        'Canned Sardines',
+                        'Canned Tuna',
+                        'Canned Beef Loaf',
+                        'Coffee or Energy Drinks'
+                    ] as $item)
+                        <option value="{{ $item }}" {{ old('item_name') === $item ? 'selected' : '' }}>{{ $item }}</option>
+                    @endforeach
+                    <option value="Other" {{ old('item_name') === 'Other' ? 'selected' : '' }}>Other</option>
+                </select>
+                <input id="other_item_name" name="other_item_name" type="text" value="{{ old('other_item_name') }}"
+                    placeholder="Enter item name" aria-label="Other item name"
+                    class="mt-3 hidden w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg text-[#1F1F1F] placeholder:text-gray-400 focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100" />
             </div>
 
             <div>
@@ -60,8 +90,9 @@
                     <option value="" disabled selected>Category</option>
                     <option>Food</option>
                     <option>Medicine</option>
-                    <option>Water</option>
+                    <option>Drink</option>
                     <option>Equipment</option>
+                    <option>Hygiene</option>
                     <option>Other</option>
                 </select>
             </div>
@@ -72,9 +103,16 @@
                     class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg text-[#1F1F1F] focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100">
                     <option value="" disabled selected>Unit of Measurement</option>
                     <option>Piece</option>
+                    <option>Pieces</option>
                     <option>Can</option>
+                    <option>Cans</option>
                     <option>Box</option>
                     <option>Pack</option>
+                    <option>Packs</option>
+                    <option>Bottle</option>
+                    <option>Grams</option>
+                    <option>Set</option>
+                    <option>Sachets</option>
                     <option>Litre</option>
                     <option>Kg</option>
                 </select>
@@ -147,6 +185,14 @@
         const newBatchFields = document.getElementById('newBatchFields');
         const batchSelect = document.getElementById('batch');
         const newBatchInput = document.getElementById('new_batch');
+        const itemSelect = document.getElementById('item_name');
+        const otherItemInput = document.getElementById('other_item_name');
+
+        function updateItemFields() {
+            const isOtherItem = itemSelect.value === 'Other';
+            otherItemInput.classList.toggle('hidden', !isOtherItem);
+            otherItemInput.required = isOtherItem;
+        }
 
         function updateBatchFields() {
             const useNewBatch = document.querySelector('input[name="batch_option"]:checked')?.value === 'new';
@@ -157,6 +203,8 @@
         }
 
         batchOptions.forEach(option => option.addEventListener('change', updateBatchFields));
+        itemSelect.addEventListener('change', updateItemFields);
+        updateItemFields();
         updateBatchFields();
     </script>
 </body>

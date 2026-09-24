@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Features;
 
 use App\Http\Controllers\Controller;
 use App\Services\FirebaseService;
+use App\Services\ReliefPackCalculator;
 use Illuminate\Http\Request;
 
 class InventoryController extends Controller
@@ -24,8 +25,9 @@ class InventoryController extends Controller
             ->values();
     }
 
-    public function index(Request $request, FirebaseService $firebase)
+    public function index(Request $request, FirebaseService $firebase, ?ReliefPackCalculator $reliefPackCalculator = null)
     {
+        $reliefPackCalculator ??= new ReliefPackCalculator();
         $inventoryItems = $this->normalizeInventoryItems($firebase->getInventory());
         $batchGroups = $inventoryItems
             ->filter(fn ($item) => filled($item['batch'] ?? null))
@@ -83,9 +85,7 @@ class InventoryController extends Controller
 
             return $expirationDate && \Carbon\Carbon::parse($expirationDate)->lt($today);
         })->count();
-        $standardReliefPacks = $inventoryItems->filter(function ($item) {
-            return ($item['type'] ?? '') === 'standard' || str_contains(mb_strtolower($item['name'] ?? ''), 'pack');
-        })->count();
+        $standardReliefPacks = $reliefPackCalculator->count($inventoryItems);
         $foodCount = $inventoryItems->filter(function ($item) {
             return mb_strtolower($item['category'] ?? '') === 'food';
         })->count();

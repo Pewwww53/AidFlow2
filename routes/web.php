@@ -37,6 +37,8 @@ Route::middleware('firebase.auth')->group(function () {
     Route::delete('/features/users/{user}', [UsersController::class, 'destroy'])->name('users.destroy');
 
     Route::get('/features/qr', [QRCodeController::class, 'index'])->name('qrcode.index');
+    Route::get('/features/qr/next-relief-pack', [QRCodeController::class, 'nextReliefPack'])->name('qrcode.relief-pack.next');
+    Route::post('/features/qr/reserve-relief-pack', [QRCodeController::class, 'reserveReliefPack'])->name('qrcode.relief-pack.reserve');
     Route::post('/features/qr/scan', [QRCodeController::class, 'scan'])->name('qrcode.scan');
 
     Route::get('/features/evacuation', [FeaturesEvacuationController::class, 'index'])->name('evacuation.index');
@@ -47,4 +49,5 @@ Route::middleware('firebase.auth')->group(function () {
     Route::get('/phoneFeatures/evacuation', [PhoneEvacuationController::class, 'index'])->name('phoneFeatures.evacuation');
     Route::post('/phoneFeatures/evacuation/scan', [PhoneEvacuationController::class, 'scan'])->name('phoneFeatures.evacuation.scan');
     Route::get('/phoneFeatures/reliefGoods', [ReliefGoodsController::class, 'index'])->name('phoneFeatures.reliefGoods');
+    Route::post('/phoneFeatures/reliefGoods/scan', [ReliefGoodsController::class, 'scan'])->name('phoneFeatures.reliefGoods.scan');
 });

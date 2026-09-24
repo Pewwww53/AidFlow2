@@ -29,6 +29,7 @@ class AddInventoryController extends Controller
     {
         $validated = $request->validate([
             'item_name' => 'nullable|string|required_without:name',
+            'other_item_name' => 'nullable|string|required_if:item_name,Other',
             'name' => 'nullable|string|required_without:item_name',
             'quantity' => 'nullable|integer|min:0|required_without:stock',
             'stock' => 'nullable|integer|min:0|required_without:quantity',
@@ -48,7 +49,9 @@ class AddInventoryController extends Controller
             : $validated['batch']);
 
         $payload = [
-            'name' => $validated['item_name'] ?? $validated['name'] ?? null,
+            'name' => ($validated['item_name'] ?? null) === 'Other'
+                ? $validated['other_item_name']
+                : ($validated['item_name'] ?? $validated['name'] ?? null),
             'category' => $validated['category'],
             'unit' => $validated['unit'],
             'stock' => (int) ($validated['quantity'] ?? $validated['stock'] ?? 0),

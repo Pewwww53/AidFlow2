@@ -3,6 +3,9 @@
 namespace App\Http\Controllers\PhoneFeatures;
 
 use App\Http\Controllers\Controller;
+use App\Services\FirebaseService;
+use App\Services\ReliefPackCalculator;
+use Illuminate\Http\Request;
 
 class ReliefGoodsController extends Controller
 {
@@ -13,5 +16,42 @@ class ReliefGoodsController extends Controller
     public function index()
     {
         return view('phoneFeatures.reliefGoods');
+    }
+
+    public function scan(Request $request, FirebaseService $firebase, ReliefPackCalculator $calculator)
+    {
+        $validated = $request->validate([
+            'package_id' => ['required', 'string', 'max:50', 'regex:/^#\d+$/'],
+        ]);
+
+        $packNumber = (int) ltrim($validated['package_id'], '#');
+        $result = $firebase->consumeReliefPack($packNumber, $calculator->requiredItems());
+
+        if ($result['status'] === 'already_scanned') {
+            return response()->json([
+                'success' => true,
+                'already_scanned' => true,
+                'message' => "Relief pack #{$packNumber} was already distributed.",
+            ]);
+        }
+
+        if ($result['status'] === 'insufficient_stock') {
+            return response()->json([
+                'success' => false,
+                'message' => "Insufficient stock for {$result['item']}.",
+            ], 422);
+        }
+
+        if ($result['status'] !== 'consumed') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Firebase could not update inventory. Please try again.',
+            ], 502);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Relief pack #{$packNumber} distributed and inventory updated.",
+        ]);
     }
 }

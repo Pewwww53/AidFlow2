@@ -1,142 +1,132 @@
 @extends('features.layout')
 
-@section('title', 'QR Code Scanner - AidFlow')
-@section('page-title', 'QR Code Scanner')
+@section('title', 'QR Code Generator - AidFlow')
+@section('page-title', 'QR Code Generator')
 
 @section('content')
 <div class="space-y-6">
-    <h2 class="text-2xl font-bold text-gray-900">Tent QR Code Scanner</h2>
+    <div class="bg-white rounded-xl shadow p-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-6">Generate QR Code</h2>
 
-    <!-- Scanner Container -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Scanner</h3>
-            <div id="scanner" style="width: 100%;"></div>
-        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <form id="qrForm" class="space-y-4">
+                <div>
+                    <label for="qrType" class="block text-sm font-medium text-gray-700 mb-1">QR Code Type</label>
+                    <select id="qrType" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="tent">Tent Code</option>
+                        <option value="food">Food Pack</option>
+                    </select>
+                </div>
 
-        <!-- Manual Input -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <h3 class="text-lg font-bold text-gray-900 mb-4">Manual Entry</h3>
-            <form id="manualForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Tent Code</label>
-                    <input type="text" id="tentCode" placeholder="Enter tent code" required 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <div id="tentField" class="space-y-2">
+                    <label for="tentCodeSelect" class="block text-sm font-medium text-gray-700 mb-1">Tent Code</label>
+                    <select id="tentCodeSelect" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Barangay Code (Optional)</label>
-                    <input type="text" id="barangayCode" placeholder="Enter barangay code" 
-                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                <div id="foodField" class="space-y-2 hidden">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Relief Pack Number</label>
+                    <div id="foodPackDisplay" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-medium">Relief Pack: #1</div>
                 </div>
-                
-                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-check mr-2"></i> Record Scan
+
+                <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                    <i class="fas fa-qrcode mr-2"></i> Generate QR
                 </button>
             </form>
 
-            <!-- Recent Scans -->
-            <div class="mt-6">
-                <h4 class="font-bold text-gray-900 mb-3">Recent Scans</h4>
-                <div id="recentScans" class="space-y-2 max-h-96 overflow-y-auto">
-                    <p class="text-gray-600 text-sm">No scans yet</p>
-                </div>
+            <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center min-h-[320px]">
+                <div id="qrCode" class="bg-white p-4 rounded-lg shadow-sm min-h-[220px] min-w-[220px] flex items-center justify-center"></div>
+                <p id="qrPreviewLabel" class="mt-4 text-lg font-semibold text-gray-900">Tent Code</p>
+                <p id="qrOutput" class="mt-2 text-sm text-gray-600 break-all text-center">No QR generated yet</p>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Import QR Scanner Library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-<script>
-    let recentScans = [];
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script type="module">
+    import { barangayList } from '/js/barangayList.js';
 
-    function onScanSuccess(decodedText, decodedResult) {
-        recordScan(decodedText);
+    const qrType = document.getElementById('qrType');
+    const tentField = document.getElementById('tentField');
+    const foodField = document.getElementById('foodField');
+    const tentCodeSelect = document.getElementById('tentCodeSelect');
+    const foodPackDisplay = document.getElementById('foodPackDisplay');
+    const qrPreviewLabel = document.getElementById('qrPreviewLabel');
+    const qrOutput = document.getElementById('qrOutput');
+    const qrCode = document.getElementById('qrCode');
+    const PACK_COUNTER_KEY = 'aidflow_relief_pack_counter';
+
+    function buildTentOptions() {
+        const tentCodes = [];
+
+        barangayList.forEach((barangay) => {
+            Object.keys(barangay.tents).forEach((tentCode) => {
+                tentCodes.push(tentCode);
+            });
+        });
+
+        tentCodeSelect.innerHTML = tentCodes.map((tentCode) => `
+            <option value="${tentCode}">${tentCode}</option>
+        `).join('');
+
+        if (tentCodes.length) {
+            tentCodeSelect.value = tentCodes[0];
+        }
     }
 
-    function onScanFailure(error) {
-        // Ignore scan failures
+    function getNextFoodPackNumber() {
+        const current = Number(localStorage.getItem(PACK_COUNTER_KEY) || '1');
+        const next = Number.isFinite(current) && current > 0 ? current : 1;
+        localStorage.setItem(PACK_COUNTER_KEY, String(next + 1));
+        return next;
     }
 
-    // Initialize scanner
-    const html5QrcodeScanner = new Html5QrcodeScanner(
-        "scanner",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        false
-    );
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+    function updateQrInputState() {
+        const isFoodPack = qrType.value === 'food';
 
-    // Manual form submission
-    document.getElementById('manualForm').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const tentCode = document.getElementById('tentCode').value;
-        recordScan(tentCode, document.getElementById('barangayCode').value);
-        document.getElementById('manualForm').reset();
+        tentField.classList.toggle('hidden', isFoodPack);
+        foodField.classList.toggle('hidden', !isFoodPack);
+        qrPreviewLabel.textContent = isFoodPack ? 'Food Pack' : 'Tent Code';
+
+        if (isFoodPack) {
+            foodPackDisplay.textContent = `Relief Pack: #1`;
+        }
+    }
+
+    function generateQrCode() {
+        const isFoodPack = qrType.value === 'food';
+
+        const qrText = isFoodPack
+            ? `#1`
+            : `${tentCodeSelect.value}`;
+
+        const qr = qrcode(0, 'M');
+        qr.addData(qrText);
+        qr.make();
+
+        qrCode.innerHTML = qr.createImgTag(10, 10);
+        qrOutput.textContent = qrText;
+    }
+
+    qrType.addEventListener('change', () => {
+        updateQrInputState();
+        generateQrCode();
     });
 
-    function recordScan(tentCode, barangayCode = null) {
-        fetch('{{ route("qrcode.scan") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                tent_code: tentCode,
-                barangay_code: barangayCode
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                addRecentScan(tentCode, barangayCode);
-                showNotification('Scan recorded successfully', 'success');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showNotification('Error recording scan', 'error');
-        });
-    }
-
-    function addRecentScan(tentCode, barangayCode) {
-        const now = new Date().toLocaleTimeString();
-        recentScans.unshift({ tentCode, barangayCode, time: now });
-        
-        if (recentScans.length > 5) {
-            recentScans.pop();
+    tentCodeSelect.addEventListener('change', () => {
+        if (qrType.value !== 'food') {
+            generateQrCode();
         }
-        
-        updateRecentScans();
-    }
+    });
 
-    function updateRecentScans() {
-        const container = document.getElementById('recentScans');
-        if (recentScans.length === 0) {
-            container.innerHTML = '<p class="text-gray-600 text-sm">No scans yet</p>';
-            return;
-        }
-        
-        container.innerHTML = recentScans.map(scan => `
-            <div class="p-2 bg-gray-100 rounded text-sm">
-                <div class="font-medium text-gray-900">${scan.tentCode}</div>
-                <div class="text-gray-600">${scan.barangayCode || 'N/A'} • ${scan.time}</div>
-            </div>
-        `).join('');
-    }
+    document.getElementById('qrForm').addEventListener('submit', (event) => {
+        event.preventDefault();
+        updateQrInputState();
+        generateQrCode();
+    });
 
-    function showNotification(message, type) {
-        // Simple notification - you can enhance this
-        alert(message);
-    }
-
-    // Add CSRF token meta tag if not present
-    if (!document.querySelector('meta[name="csrf-token"]')) {
-        const token = document.createElement('meta');
-        token.name = 'csrf-token';
-        token.content = '{{ csrf_token() }}';
-        document.head.appendChild(token);
-    }
+    buildTentOptions();
+    updateQrInputState();
+    generateQrCode();
 </script>
 @endsection
