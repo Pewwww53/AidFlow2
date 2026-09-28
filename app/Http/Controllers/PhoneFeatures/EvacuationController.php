@@ -8,13 +8,16 @@ use App\Models\ScanEvent;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 
+/** Serves mobile tent scanning and synchronizes occupancy changes with Firebase and local records. */
 class EvacuationController extends Controller
 {
+    /** Display the mobile evacuation scanner. */
     public function index()
     {
         return view('phoneFeatures.evacuation');
     }
 
+    /** Validate a tent scan and toggle occupancy, asking for confirmation before unoccupying. */
     public function scan(Request $request, FirebaseService $firebase)
     {
         $validated = $request->validate([
@@ -30,6 +33,7 @@ class EvacuationController extends Controller
         $occupied = $firebase->getOccupiedTent($tentCode);
         $confirmUnoccupy = $validated['confirm_unoccupy'] ?? false;
 
+        // Require explicit confirmation before changing an occupied tent to unoccupied.
         if ($confirmUnoccupy && !$occupied) {
             return response()->json([
                 'success' => true,

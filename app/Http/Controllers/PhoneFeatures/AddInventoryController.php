@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 
+/** Supplies the mobile inventory form and creates inventory records from its inputs. */
 class AddInventoryController extends Controller
 {
     public function __construct()
     {
     }
 
+    /** Load distinct existing batch names for the inventory form. */
     public function index(FirebaseService $firebase)
     {
         $inventory = $firebase->getInventory();
@@ -25,6 +27,7 @@ class AddInventoryController extends Controller
         return view('phoneFeatures.addInventory', compact('batches'));
     }
 
+    /** Normalize supported form field names and save the validated inventory item. */
     public function store(Request $request, FirebaseService $firebase)
     {
         $validated = $request->validate([

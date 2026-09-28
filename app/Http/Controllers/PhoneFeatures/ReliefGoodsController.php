@@ -7,17 +7,20 @@ use App\Services\FirebaseService;
 use App\Services\ReliefPackCalculator;
 use Illuminate\Http\Request;
 
+/** Provides relief-pack scanning and distribution with inventory validation. */
 class ReliefGoodsController extends Controller
 {
     public function __construct()
     {
     }
 
+    /** Display the mobile relief-goods scanner. */
     public function index()
     {
         return view('phoneFeatures.reliefGoods');
     }
 
+    /** Consume a scanned pack and report duplicate scans or insufficient stock. */
     public function scan(Request $request, FirebaseService $firebase, ReliefPackCalculator $calculator)
     {
         $validated = $request->validate([

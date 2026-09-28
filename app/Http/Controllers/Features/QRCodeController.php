@@ -9,6 +9,7 @@ use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
+/** Serves QR scanning pages and records tent or relief-pack scan operations. */
 class QRCodeController extends Controller
 {
     public function __construct()
@@ -16,11 +17,13 @@ class QRCodeController extends Controller
 
     }
 
+    /** Display the QR scanning page. */
     public function index()
     {
         return view('features.qrcode.index');
     }
 
+    /** Return the next available relief-pack number without reserving it. */
     public function nextReliefPack(FirebaseService $firebase)
     {
         $number = $firebase->getNextReliefPackNumber();
@@ -32,6 +35,7 @@ class QRCodeController extends Controller
         ]);
     }
 
+    /** Reserve the next relief-pack number and return its display label. */
     public function reserveReliefPack(FirebaseService $firebase)
     {
         $number = $firebase->reserveNextReliefPackNumber();
@@ -43,6 +47,7 @@ class QRCodeController extends Controller
         ]);
     }
 
+    /** Record a tent scan and mark that tent as occupied. */
     public function scan(Request $request)
     {
         $validated = $request->validate([

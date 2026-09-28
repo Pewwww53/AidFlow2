@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
+/** Searches, paginates, and manages user accounts in Firebase. */
 class UsersController extends Controller
 {
     public function __construct()
@@ -16,6 +17,7 @@ class UsersController extends Controller
 
     }
 
+    /** Apply optional search and role filters before paginating users. */
     public function index(Request $request)
     {
         $users = User::all();
@@ -49,6 +51,7 @@ class UsersController extends Controller
         return view('features.users.index', ['users' => $users]);
     }
 
+    /** Create an available username by appending a number when the base name is taken. */
     function generateUsername($fullName)
     {
         $baseUsername = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $fullName));
@@ -62,6 +65,7 @@ class UsersController extends Controller
 
         return $username;
     }
+    /** Validate user details, generate a username, and create the Firebase account. */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -97,6 +101,7 @@ class UsersController extends Controller
         return redirect()->back()->withErrors(['error' => 'Failed to create user']);
     }
 
+    /** Update a user's profile and only replace the password when one was provided. */
     public function update(Request $request, $username)
     {
         $firebase = app(FirebaseService::class);
@@ -135,6 +140,7 @@ class UsersController extends Controller
         ]);
     }
 
+    /** Prevent self-deletion, then remove the selected account from Firebase. */
     public function destroy($username)
     {
         $currentUsername = session('user.username'); // or however you store the logged-in user

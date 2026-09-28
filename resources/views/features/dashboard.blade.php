@@ -279,6 +279,7 @@
                 }
                 const ratio = info.maxTents > 0 ? occupied / info.maxTents : 0;
 
+                // Highlight any occupied barangay in amber and high utilization (80%+) in red.
                 let fill = '#289432';
                 let border = '#1C4D23';
                 let className = 'glow-green';
@@ -380,6 +381,7 @@
                         }).addTo(map);
 
                         updateLayerTooltips();
+                        // Wait for the map container to finish laying out before measuring its bounds.
                         setTimeout(() => {
                             map.invalidateSize();
                             const bounds = geoLayer.getBounds();

@@ -8,6 +8,7 @@ use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 
+/** Registers accounts after checking Firebase for duplicate usernames and email addresses. */
 class RegisterController extends Controller
 {
     protected $firebaseService;
@@ -17,11 +18,13 @@ class RegisterController extends Controller
         $this->firebaseService = $firebaseService;
     }
 
+    /** Display the account registration form. */
     public function showRegister()
     {
         return view('auth.register');
     }
 
+    /** Validate and create an account, returning validation or persistence errors to the form. */
     public function register(Request $request)
     {
         // Custom validation without database unique rules

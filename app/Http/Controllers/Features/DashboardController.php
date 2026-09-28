@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Services\FirebaseService;
 use App\Services\ReliefPackCalculator;
 
+/** Collects inventory, evacuation, audit, and forecast data for the operations dashboard. */
 class DashboardController extends Controller
 {
     public function __construct()
     {
     }
 
+    /** Aggregate Firebase records and annual dataset totals for the dashboard view. */
     public function index(FirebaseService $firebase, ?ReliefPackCalculator $reliefPackCalculator = null)
     {
         $reliefPackCalculator ??= new ReliefPackCalculator();
@@ -42,6 +44,7 @@ class DashboardController extends Controller
                 return max(0, (int) round($values[0] ?? 0));
             }
 
+            // Fit a least-squares line to annual totals, then evaluate it for the next year.
             $sumYears = array_sum($years);
             $sumValues = array_sum($values);
             $sumYearValues = 0;

@@ -7,8 +7,10 @@ use App\Services\FirebaseService;
 use App\Services\ReliefPackCalculator;
 use Illuminate\Http\Request;
 
+/** Lists and maintains inventory records stored in Firebase. */
 class InventoryController extends Controller
 {
+    /** Convert Firebase's keyed records into view-ready items while retaining each record ID. */
     private function normalizeInventoryItems($inventoryData)
     {
         return collect($inventoryData)
@@ -25,6 +27,7 @@ class InventoryController extends Controller
             ->values();
     }
 
+    /** Filter inventory, calculate summary metrics, and render the inventory page. */
     public function index(Request $request, FirebaseService $firebase, ?ReliefPackCalculator $reliefPackCalculator = null)
     {
         $reliefPackCalculator ??= new ReliefPackCalculator();
@@ -118,6 +121,7 @@ class InventoryController extends Controller
         ));
     }
 
+    /** Validate and add an inventory record. */
     public function store(Request $request, FirebaseService $firebase)
     {
         $validated = $request->validate([
@@ -134,6 +138,7 @@ class InventoryController extends Controller
         return redirect()->back()->with('success', 'Item added successfully');
     }
 
+    /** Validate and replace the selected inventory record's data. */
     public function update(Request $request, $id, FirebaseService $firebase)
     {
         $validated = $request->validate([
@@ -150,6 +155,7 @@ class InventoryController extends Controller
         return redirect()->back()->with('success', 'Item updated successfully');
     }
 
+    /** Remove the selected inventory record. */
     public function destroy($id, FirebaseService $firebase)
     {
         $firebase->deleteInventory($id);
@@ -157,6 +163,7 @@ class InventoryController extends Controller
         return redirect()->back()->with('success', 'Item deleted successfully');
     }
 
+    /** Show records associated with the requested batch identifier. */
     public function batch($batchId, FirebaseService $firebase)
     {
         $items = $this->normalizeInventoryItems($firebase->getInventory())
