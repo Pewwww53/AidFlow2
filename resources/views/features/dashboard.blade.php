@@ -390,6 +390,9 @@
                             }
                         }, 100);
                     });
+
+
+                    // update layer tooltips when occupancy data changes in real-time via Firebase
                 if (window.firebaseDatabase) {
                     const occupancyRef = ref(window.firebaseDatabase, 'occupiedTents');
 
