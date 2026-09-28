@@ -1,9 +1,21 @@
 <?php
 
+// Vercel functions have a read-only deployment filesystem. Point Laravel's
+// runtime files (compiled views, sessions, cache, and logs) at its writable
+// temporary directory instead.
+$storagePath = '/tmp/laravel';
+
+putenv("LARAVEL_STORAGE_PATH={$storagePath}");
+$_ENV['LARAVEL_STORAGE_PATH'] = $storagePath;
+$_SERVER['LARAVEL_STORAGE_PATH'] = $storagePath;
+
 $tmpDirectories = [
-    '/tmp/views',
-    '/tmp/cache',
-    '/tmp/sessions',
+    "{$storagePath}/app",
+    "{$storagePath}/framework/cache/data",
+    "{$storagePath}/framework/sessions",
+    "{$storagePath}/framework/testing",
+    "{$storagePath}/framework/views",
+    "{$storagePath}/logs",
 ];
 
 foreach ($tmpDirectories as $directory) {
