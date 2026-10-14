@@ -43,7 +43,7 @@
             stroke-width: 3px;
         }
     </style>
-    <div class="flex gap-4 min-h-[calc(100vh-120px)]">
+    <div class="flex gap-4 min-h-[calc(100vh-120px)] max-h-[calc(100vh-120px)]">
         <div class="bg-white rounded-[20px] border-[3px] border-[#8a1c1c] p-4 shadow-sm">
             <div class="flex flex-col gap-4">
                 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -87,10 +87,10 @@
                     </select>
                 </div>
 
-                <div class="border border-gray-300 rounded-[14px] overflow-hidden">
-                    <div class="overflow-x-auto ">
-                        <table class="min-w-full text-sm text-left text-gray-800">
-                            <thead class="bg-[#960505] text-white">
+                <div class="border border-gray-300 rounded-[14px]">
+                    <div class="overflow-x-auto max-h-[calc(110vh-410px)]">
+                        <table class="min-w-full text-sm text-left text-gray-800 ">
+                            <thead class="bg-[#960505] text-white sticky top-0 z-10">
                                 <tr>
                                     <th class="px-3 py-3 font-normal">Date</th>
                                     <th class="px-3 py-3 font-normal">Tent ID</th>

@@ -14,6 +14,52 @@
         </div>
     @endif
 
+    @if ($lowStockAlerts->isNotEmpty() || $nearExpiryAlerts->isNotEmpty() || $standardReliefPackSupply <= $minimumStandardReliefPacks)
+        <section id="inventoryAlerts" role="alert"
+            class="fixed right-4 top-4 z-40 max-h-[80vh] w-[calc(100vw-2rem)] max-w-xl overflow-y-auto rounded-lg border-2 border-amber-500 bg-amber-50 p-4 text-amber-950 shadow-xl">
+            <div class="mb-2 flex items-center justify-between gap-4">
+                <h2 class="text-lg font-bold">Inventory Alerts</h2>
+                <button type="button" id="closeInventoryAlerts" aria-label="Close inventory alerts"
+                    class="rounded px-2 py-1 text-xl font-bold leading-none text-amber-950 hover:bg-amber-100 focus:outline-none focus:ring-2 focus:ring-amber-700">
+                    &times;
+                </button>
+            </div>
+            @if ($lowStockAlerts->isNotEmpty())
+                <h3 class="font-semibold">Low stock</h3>
+                <ul class="mb-2 list-disc pl-5">
+                    @foreach ($lowStockAlerts as $alertItem)
+                        <li>
+                            {{ $alertItem['name'] ?? 'Unnamed Item' }} has {{ $alertItem['stock'] ?? 0 }}
+                            remaining (minimum {{ $alertItem['minimumStock'] ?? 50 }})
+                            @if (filled($alertItem['batch'] ?? null))
+                                — Batch {{ $alertItem['batch'] }}
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+            @if ($nearExpiryAlerts->isNotEmpty())
+                <h3 class="font-semibold">Near expiry (within 3 months)</h3>
+                <ul class="mb-2 list-disc pl-5">
+                    @foreach ($nearExpiryAlerts as $alertItem)
+                        <li>
+                            {{ $alertItem['name'] ?? 'Unnamed Item' }} expires
+                            {{ \Carbon\Carbon::parse($alertItem['expirationDate'])->format('m/d/Y') }}
+                            @if (filled($alertItem['batch'] ?? null))
+                                — Batch {{ $alertItem['batch'] }}
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+            @if ($standardReliefPackSupply <= $minimumStandardReliefPacks)
+                <p>
+                    Only {{ $standardReliefPackSupply }} standard relief {{ \Illuminate\Support\Str::plural('pack', $standardReliefPackSupply) }} can be assembled (minimum {{ $minimumStandardReliefPacks }}).
+                </p>
+            @endif
+        </section>
+    @endif
+
     <div class="flex flex-row flex-wrap lg:flex-nowrap gap-2">
         <div class="bg-white rounded-[20px] border-[3px] border-[#8a1c1c] p-4 flex items-center shadow-sm w-full">
             <div class="shrink-0 mr-4">
@@ -90,9 +136,10 @@
     </form>
 
     <div class="flex flex-row gap-4">
-        <div class="flex-1 flex flex-col bg-white rounded-lg border-2 border-red-600 p-4 min-h-[calc(82vh-120px)]">
+        <div
+            class="flex-1 flex flex-col bg-white rounded-lg border-2 border-red-600 p-4 min-h-[calc(82vh-120px)] max-h-[calc(82vh-120px)]">
             <h3 class="text-red-700 text-xl font-semibold mb-2">Inventory List</h3>
-            <div class="overflow-auto h-full max-h-full border border-pink-100 rounded-md p-2">
+            <div class="overflow-auto h-full max-h-full border border-red-200 rounded-md p-2">
                 <table class="w-full text-sm divide-y divide-gray-100">
                     <thead class="text-red-800 font-semibold">
                         <tr>
@@ -100,35 +147,85 @@
                             <th class="py-2 text-left">Category</th>
                             <th class="py-2 text-left">Unit</th>
                             <th class="py-2 text-left">Stock</th>
-                            <th class="py-2 text-left">Exp. Date</th>
-                            <th class="py-2 text-left">Status</th>
                         </tr>
                     </thead>
                     <tbody class="text-gray-700">
-                        @forelse ($inventoryItems as $item)
-                            @php
-                                $expirationDate = $item['expirationDate'] ?? null;
-                                $statusLabel = 'Good';
-                                $statusClass = 'text-green-600 font-bold';
-
-                                if ($expirationDate) {
-                                    $parsedDate = \Carbon\Carbon::parse($expirationDate);
-                                    if ($parsedDate->lt($today)) {
-                                        $statusLabel = 'Expired';
-                                        $statusClass = 'text-red-600 font-bold';
-                                    } elseif ($parsedDate->lte($today->copy()->addDays(30))) {
-                                        $statusLabel = 'Near Expiry';
-                                        $statusClass = 'text-yellow-600 font-bold';
-                                    }
-                                }
-                            @endphp
+                        @forelse ($inventoryListItems as $item)
                             <tr class="border-b">
-                                <td class="py-2">{{ $item['name'] ?? 'Unnamed Item' }}</td>
+                                <td class="py-2">
+                                    <button type="button"
+                                        class="inventory-details-toggle cursor-pointer text-left text-red-700 underline decoration-dotted underline-offset-2 hover:text-red-900"
+                                        aria-expanded="false"
+                                        aria-controls="inventory-details-{{ $loop->index }}">
+                                        {{ $item['name'] ?? 'Unnamed Item' }}
+                                    </button>
+                                </td>
                                 <td>{{ $item['category'] ?? 'Uncategorized' }}</td>
                                 <td>{{ $item['unit'] ?? '-' }}</td>
                                 <td>{{ $item['stock'] ?? 0 }}</td>
-                                <td>{{ $expirationDate ? \Carbon\Carbon::parse($expirationDate)->format('m/d/y') : '—' }}</td>
-                                <td class="{{ $statusClass }}">{{ $statusLabel }}</td>
+                            </tr>
+                            <tr id="inventory-details-{{ $loop->index }}" class="hidden bg-red-200">
+                                <td colspan="4" class="p-3">
+                                    <div class="overflow-x-auto">
+                                        <table class="w-full text-sm text-left">
+                                            <thead class="text-red-800">
+                                                <tr>
+                                                    <th class="px-3 py-2">Expiration Date</th>
+                                                    <th class="px-3 py-2">Status</th>
+                                                    <th class="px-3 py-2">Stock</th>
+                                                    <th class="px-3 py-2">Minimum Stock</th>
+                                                    <th class="px-3 py-2">Batch</th>
+                                                    <th class="px-3 py-2">Configure Alert</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @foreach ($item['records'] as $record)
+                                                    @php
+                                                        $expirationDate = $record['expirationDate'] ?? null;
+                                                        $parsedExpirationDate = $expirationDate
+                                                            ? \Carbon\Carbon::parse($expirationDate)
+                                                            : null;
+                                                        $status = !$parsedExpirationDate || $parsedExpirationDate->gt($today->copy()->addMonths(3))
+                                                            ? 'Good'
+                                                            : ($parsedExpirationDate->lt($today)
+                                                                ? 'Expired'
+                                                                : 'Near Expiry');
+                                                    @endphp
+                                                    <tr class="border-t border-red-200">
+                                                        <td class="px-3 py-2">
+                                                            {{ $parsedExpirationDate ? $parsedExpirationDate->format('m/d/Y') : '—' }}
+                                                        </td>
+                                                        <td class="px-3 py-2">{{ $status }}</td>
+                                                        <td class="px-3 py-2">{{ $record['stock'] ?? 0 }}</td>
+                                                        <td class="px-3 py-2">{{ $record['minimumStock'] ?? 50 }}</td>
+                                                        <td class="px-3 py-2">{{ $record['batch'] ?? '—' }}</td>
+                                                        <td class="px-3 py-2">
+                                                            <form method="POST"
+                                                                action="{{ route('inventory.update', $record['id']) }}"
+                                                                class="flex items-center gap-2">
+                                                                @csrf
+                                                                @method('PUT')
+                                                                <input type="hidden" name="name" value="{{ $record['name'] ?? '' }}">
+                                                                <input type="hidden" name="category" value="{{ $record['category'] ?? '' }}">
+                                                                <input type="hidden" name="unit" value="{{ $record['unit'] ?? '' }}">
+                                                                <input type="hidden" name="stock" value="{{ $record['stock'] ?? 0 }}">
+                                                                <input type="hidden" name="received" value="{{ $record['received'] ?? '' }}">
+                                                                <input type="hidden" name="expirationDate" value="{{ $record['expirationDate'] ?? '' }}">
+                                                                <label class="sr-only" for="minimum-stock-{{ $record['id'] }}">Minimum stock for {{ $record['name'] ?? 'item' }}</label>
+                                                                <input id="minimum-stock-{{ $record['id'] }}"
+                                                                    name="minimumStock" type="number" min="0"
+                                                                    value="{{ $record['minimumStock'] ?? 50 }}" required
+                                                                    class="w-20 rounded border border-red-300 px-2 py-1">
+                                                                <button type="submit"
+                                                                    class="rounded bg-red-700 px-2 py-1 text-white hover:bg-red-800">Save</button>
+                                                            </form>
+                                                        </td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </td>
                             </tr>
                         @empty
                             <tr>
@@ -203,202 +300,252 @@
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
+            <div class="bg-white rounded-lg border-2 border-red-600 p-4 min-h-[calc(40vh-120px)] max-h-[calc(40vh-120px)]">
+                <div class="text-red-800 text-lg font-semibold mb-2">Inventory Ledger</div>
+                <div class="flex flex-col gap-2">
+                    @forelse ($inventoryItems as $item)
+                        @php
+                            $distributed = $item['distributed'] ?? false;
+                            $removed = $item['removed'] ?? false;
 
-    <div id="expiredModal"
-        class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="w-full max-w-5xl rounded-2xl border-4 border-red-600 bg-white shadow-2xl overflow-hidden">
-            <div class="px-6 py-5 text-white">
-                <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <div class="text-xs uppercase tracking-[0.35em] text-red-400">Expired Items</div>
-                        <h3 class="text-3xl font-bold text-red-600">Expired Inventory</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="p-6">
-                <div class="overflow-hidden rounded border border-red-600 bg-[#ffdfe1] shadow-sm">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full text-sm text-left">
-                            <thead class="text-red-700">
-                                <tr>
-                                    <th class="px-5 py-4">Item</th>
-                                    <th class="px-5 py-4">Category</th>
-                                    <th class="px-5 py-4">Quantity</th>
-                                    <th class="px-5 py-4">Exp Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $expiredItemsForModal = $inventoryItems->filter(function ($item) use ($today) {
-                                        $expirationDate = $item['expirationDate'] ?? null;
+                            $statusLabel = $distributed ? 'Distributed' : ($removed ? 'Removed' : 'Added');
+                            $statusDate = $distributed ? $item['distributed'] : ($removed ? $item['removed'] : $item['added']);
+                            $statusClass = $distributed
+                                ? 'text-blue-600 font-bold'
+                                : ($removed ? 'text-gray-600 font-bold' : 'text-green-600 font-bold');
 
-                                        return $expirationDate && \Carbon\Carbon::parse($expirationDate)->lt($today);
-                                    })->values();
-                                @endphp
-                                @forelse($expiredItemsForModal as $item)
-                                    <tr class="border-t border-red-100">
-                                        <td class="px-5 py-4 text-gray-900">{{ $item['name'] ?? 'Unnamed Item' }}</td>
-                                        <td class="px-5 py-4 text-gray-900">{{ $item['category'] ?? 'Uncategorized' }}</td>
-                                        <td class="px-5 py-4 text-gray-900">{{ $item['stock'] ?? 0 }}</td>
-                                        <td class="px-5 py-4 text-gray-900">
-                                            {{ $item['expirationDate'] ? \Carbon\Carbon::parse($item['expirationDate'])->format('m/d/y') : '—' }}
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="4" class="px-5 py-8 text-center text-gray-500">No expired items found.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                        @endphp
 
-                <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
-                    <button type="button" id="expiredCloseBtn"
-                        class="cursor-pointer inline-flex items-center justify-center rounded-full border border-red-700 bg-white px-6 py-3 text-red-700 font-semibold transition hover:bg-red-50">Back
-                        to Inventory</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="batchModal"
-        class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
-        <div class="w-full max-w-5xl rounded-2xl border-4 border-red-600 bg-white shadow-2xl overflow-hidden">
-            <div class="px-6 py-5 text-white">
-                <div class="flex items-center justify-between gap-4">
-                    <div>
-                        <div class="text-xs uppercase tracking-[0.35em] text-red-400">Table of Item Batch</div>
-                        <h3 class="text-3xl font-bold text-red-600">Batch Details</h3>
-                    </div>
-                </div>
-            </div>
-            <div class="p-6">
-                @if ($batchGroups->isNotEmpty())
-                    <div class="mb-4 flex flex-wrap gap-3" role="tablist" aria-label="Inventory batches">
-                        @foreach ($batchGroups as $batchName => $batchItems)
-                            <button type="button" role="tab" data-batch-target="batch-panel-{{ $loop->index }}"
-                                class="batch-tab rounded-full px-4 py-2 {{ $loop->first ? 'bg-red-700 text-white font-semibold' : 'bg-red-50 text-red-700' }}">
-                                Batch {{ $batchName }} ({{ $batchItems->count() }})
-                            </button>
-                        @endforeach
-                    </div>
-
-                    @foreach ($batchGroups as $batchName => $batchItems)
-                        <div id="batch-panel-{{ $loop->index }}"
-                            class="batch-panel {{ $loop->first ? '' : 'hidden' }} overflow-hidden rounded border border-red-600 bg-[#ffdfe1] shadow-sm">
-                            <div class="overflow-x-auto">
-                                <table class="min-w-full text-sm text-left">
-                                    <thead class="text-red-700">
-                                        <tr>
-                                            <th class="px-5 py-4">Item</th>
-                                            <th class="px-5 py-4">Category</th>
-                                            <th class="px-5 py-4">Quantity</th>
-                                            <th class="px-5 py-4">Exp Date</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach ($batchItems as $item)
-                                            <tr class="border-t border-red-100">
-                                                <td class="px-5 py-4 text-gray-900">{{ $item['name'] ?? 'Unnamed Item' }}</td>
-                                                <td class="px-5 py-4 text-gray-900">{{ $item['category'] ?? 'Uncategorized' }}</td>
-                                                <td class="px-5 py-4 text-gray-900">{{ $item['stock'] ?? 0 }}</td>
-                                                <td class="px-5 py-4 text-gray-900">
-                                                    {{ !empty($item['expirationDate']) ? \Carbon\Carbon::parse($item['expirationDate'])->format('m/d/y') : '�' }}
-                                                </td>
-                                            </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
+                        <div class="flex justify-between items-center border-b border-pink-100 py-2">
+                            <div>
+                                <div class="font-semibold text-xs w-30 truncate" title="{{ $item['name'] ?? 'Unnamed Item' }}">
+                                    {{ $item['name'] ?? 'Unnamed Item' }}
+                                </div>
+                                <div class="text-xs text-gray-600">{{ $item['category'] ?? 'Uncategorized' }}</div>
+                            </div>
+                            <div class="text-xs {{ $statusClass }}">
+                                {{ $statusLabel }} on
+                                {{ $statusDate ? \Carbon\Carbon::parse($statusDate)->format('m/d/y') : '—' }}
                             </div>
                         </div>
-                    @endforeach
-                @else
-                    <div class="rounded border border-red-200 bg-red-50 px-5 py-8 text-center text-gray-600">
-                        No batched inventory items yet. Add an item and choose or create a batch.
-                    </div>
-                @endif
-                <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
-                    <button type="button" id="batchSaveBtn"
-                        class="cursor-pointer inline-flex items-center justify-center rounded-full bg-red-700 px-6 py-3 text-white font-semibold transition hover:bg-red-800">Save</button>
-                    <button type="button" id="batchCloseBtn"
-                        class="cursor-pointer inline-flex items-center justify-center rounded-full border border-red-700 bg-white px-6 py-3 text-red-700 font-semibold transition hover:bg-red-50">Back
-                        to Inventory</button>
+                    @empty
+                        <div class="text-gray-500 text-center py-4">No inventory items found.</div>
+                    @endforelse
                 </div>
             </div>
         </div>
-    </div>
 
-    @push('scripts')
-        <script>
-            const expiredModal = document.getElementById('expiredModal');
-            const openExpiredModalBtn = document.getElementById('openExpiredModal');
-            const closeExpiredModalBtn = document.getElementById('closeExpiredModal');
-            const expiredCloseBtn = document.getElementById('expiredCloseBtn');
-            const batchModal = document.getElementById('batchModal');
-            const openBatchModalBtn = document.getElementById('openBatchModal');
-            const closeBatchModalBtn = document.getElementById('closeBatchModal');
-            const batchCloseBtn = document.getElementById('batchCloseBtn');
-            const batchSaveBtn = document.getElementById('batchSaveBtn');
-            const batchTabButtons = document.querySelectorAll('.batch-tab');
-            const batchPanels = document.querySelectorAll('.batch-panel');
+        <div id="expiredModal"
+            class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="w-full max-w-5xl rounded-2xl border-4 border-red-600 bg-white shadow-2xl overflow-hidden">
+                <div class="px-6 py-5 text-white">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.35em] text-red-400">Expired Items</div>
+                            <h3 class="text-3xl font-bold text-red-600">Expired Inventory</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    <div class="overflow-hidden rounded border border-red-600 bg-[#ffdfe1] shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm text-left">
+                                <thead class="text-red-700">
+                                    <tr>
+                                        <th class="px-5 py-4">Item</th>
+                                        <th class="px-5 py-4">Category</th>
+                                        <th class="px-5 py-4">Quantity</th>
+                                        <th class="px-5 py-4">Exp Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        $expiredItemsForModal = $inventoryItems->filter(function ($item) use ($today) {
+                                            $expirationDate = $item['expirationDate'] ?? null;
 
-            function openExpiredModal() {
-                expiredModal.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            }
+                                            return $expirationDate && \Carbon\Carbon::parse($expirationDate)->lt($today);
+                                        })->values();
+                                    @endphp
+                                    @forelse($expiredItemsForModal as $item)
+                                        <tr class="border-t border-red-100">
+                                            <td class="px-5 py-4 text-gray-900">{{ $item['name'] ?? 'Unnamed Item' }}</td>
+                                            <td class="px-5 py-4 text-gray-900">{{ $item['category'] ?? 'Uncategorized' }}</td>
+                                            <td class="px-5 py-4 text-gray-900">{{ $item['stock'] ?? 0 }}</td>
+                                            <td class="px-5 py-4 text-gray-900">
+                                                {{ $item['expirationDate'] ? \Carbon\Carbon::parse($item['expirationDate'])->format('m/d/y') : '—' }}
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="px-5 py-8 text-center text-gray-500">No expired items found.
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
-            function closeExpiredModal() {
-                expiredModal.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            }
+                    <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
+                        <button type="button" id="expiredCloseBtn"
+                            class="cursor-pointer inline-flex items-center justify-center rounded-full border border-red-700 bg-white px-6 py-3 text-red-700 font-semibold transition hover:bg-red-50">Back
+                            to Inventory</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            function openBatchModal() {
-                batchModal.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
-            }
+        <div id="batchModal"
+            class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+            <div class="w-full max-w-5xl rounded-2xl border-4 border-red-600 bg-white shadow-2xl overflow-hidden">
+                <div class="px-6 py-5 text-white">
+                    <div class="flex items-center justify-between gap-4">
+                        <div>
+                            <div class="text-xs uppercase tracking-[0.35em] text-red-400">Table of Item Batch</div>
+                            <h3 class="text-3xl font-bold text-red-600">Batch Details</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-6">
+                    @if ($batchGroups->isNotEmpty())
+                        <div class="mb-4 flex flex-wrap gap-3" role="tablist" aria-label="Inventory batches">
+                            @foreach ($batchGroups as $batchName => $batchItems)
+                                <button type="button" role="tab" data-batch-target="batch-panel-{{ $loop->index }}"
+                                    class="batch-tab rounded-full px-4 py-2 {{ $loop->first ? 'bg-red-700 text-white font-semibold' : 'bg-red-50 text-red-700' }}">
+                                    Batch {{ $batchName }} ({{ $batchItems->count() }})
+                                </button>
+                            @endforeach
+                        </div>
 
-            function closeBatchModal() {
-                batchModal.classList.add('hidden');
-                document.body.classList.remove('overflow-hidden');
-            }
+                        @foreach ($batchGroups as $batchName => $batchItems)
+                            <div id="batch-panel-{{ $loop->index }}"
+                                class="batch-panel {{ $loop->first ? '' : 'hidden' }} overflow-hidden rounded border border-red-600 bg-[#ffdfe1] shadow-sm">
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm text-left">
+                                        <thead class="text-red-700">
+                                            <tr>
+                                                <th class="px-5 py-4">Item</th>
+                                                <th class="px-5 py-4">Category</th>
+                                                <th class="px-5 py-4">Quantity</th>
+                                                <th class="px-5 py-4">Exp Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($batchItems as $item)
+                                                <tr class="border-t border-red-100">
+                                                    <td class="px-5 py-4 text-gray-900">{{ $item['name'] ?? 'Unnamed Item' }}</td>
+                                                    <td class="px-5 py-4 text-gray-900">{{ $item['category'] ?? 'Uncategorized' }}</td>
+                                                    <td class="px-5 py-4 text-gray-900">{{ $item['stock'] ?? 0 }}</td>
+                                                    <td class="px-5 py-4 text-gray-900">
+                                                        {{ !empty($item['expirationDate']) ? \Carbon\Carbon::parse($item['expirationDate'])->format('m/d/y') : '�' }}
+                                                    </td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="rounded border border-red-200 bg-red-50 px-5 py-8 text-center text-gray-600">
+                            No batched inventory items yet. Add an item and choose or create a batch.
+                        </div>
+                    @endif
+                    <div class="mt-6 flex flex-wrap items-center justify-end gap-3">
+                        <button type="button" id="batchSaveBtn"
+                            class="cursor-pointer inline-flex items-center justify-center rounded-full bg-red-700 px-6 py-3 text-white font-semibold transition hover:bg-red-800">Save</button>
+                        <button type="button" id="batchCloseBtn"
+                            class="cursor-pointer inline-flex items-center justify-center rounded-full border border-red-700 bg-white px-6 py-3 text-red-700 font-semibold transition hover:bg-red-50">Back
+                            to Inventory</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            openExpiredModalBtn?.addEventListener('click', openExpiredModal);
-            closeExpiredModalBtn?.addEventListener('click', closeExpiredModal);
-            expiredCloseBtn?.addEventListener('click', closeExpiredModal);
-            openBatchModalBtn?.addEventListener('click', openBatchModal);
-            closeBatchModalBtn?.addEventListener('click', closeBatchModal);
-            batchCloseBtn?.addEventListener('click', closeBatchModal);
-            batchSaveBtn?.addEventListener('click', closeBatchModal);
+        @push('scripts')
+            <script>
+                const expiredModal = document.getElementById('expiredModal');
+                const openExpiredModalBtn = document.getElementById('openExpiredModal');
+                const closeExpiredModalBtn = document.getElementById('closeExpiredModal');
+                const expiredCloseBtn = document.getElementById('expiredCloseBtn');
+                const batchModal = document.getElementById('batchModal');
+                const openBatchModalBtn = document.getElementById('openBatchModal');
+                const closeBatchModalBtn = document.getElementById('closeBatchModal');
+                const batchCloseBtn = document.getElementById('batchCloseBtn');
+                const batchSaveBtn = document.getElementById('batchSaveBtn');
+                const batchTabButtons = document.querySelectorAll('.batch-tab');
+                const batchPanels = document.querySelectorAll('.batch-panel');
+                const inventoryDetailsButtons = document.querySelectorAll('.inventory-details-toggle');
+                const inventoryAlerts = document.getElementById('inventoryAlerts');
+                const closeInventoryAlertsBtn = document.getElementById('closeInventoryAlerts');
 
-            expiredModal?.addEventListener('click', (event) => {
-                if (event.target === expiredModal) {
-                    closeExpiredModal();
-                }
-            });
-
-            batchModal?.addEventListener('click', (event) => {
-                if (event.target === batchModal) {
-                    closeBatchModal();
-                }
-            });
-
-            batchTabButtons.forEach((button) => {
-                button.addEventListener('click', () => {
-                    batchTabButtons.forEach((tab) => {
-                        tab.classList.remove('bg-red-700', 'text-white', 'font-semibold');
-                        tab.classList.add('bg-red-50', 'text-red-700');
-                    });
-                    batchPanels.forEach((panel) => panel.classList.add('hidden'));
-
-                    button.classList.remove('bg-red-50', 'text-red-700');
-                    button.classList.add('bg-red-700', 'text-white', 'font-semibold');
-                    document.getElementById(button.dataset.batchTarget)?.classList.remove('hidden');
+                closeInventoryAlertsBtn?.addEventListener('click', () => {
+                    inventoryAlerts?.classList.add('hidden');
                 });
-            });
-        </script>
-    @endpush
+
+                inventoryDetailsButtons.forEach((button) => {
+                    button.addEventListener('click', () => {
+                        const details = document.getElementById(button.getAttribute('aria-controls'));
+                        const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+                        details?.classList.toggle('hidden', isExpanded);
+                        button.setAttribute('aria-expanded', String(!isExpanded));
+                    });
+                });
+
+                function openExpiredModal() {
+                    expiredModal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                }
+
+                function closeExpiredModal() {
+                    expiredModal.classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                }
+
+                function openBatchModal() {
+                    batchModal.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
+                }
+
+                function closeBatchModal() {
+                    batchModal.classList.add('hidden');
+                    document.body.classList.remove('overflow-hidden');
+                }
+
+                openExpiredModalBtn?.addEventListener('click', openExpiredModal);
+                closeExpiredModalBtn?.addEventListener('click', closeExpiredModal);
+                expiredCloseBtn?.addEventListener('click', closeExpiredModal);
+                openBatchModalBtn?.addEventListener('click', openBatchModal);
+                closeBatchModalBtn?.addEventListener('click', closeBatchModal);
+                batchCloseBtn?.addEventListener('click', closeBatchModal);
+                batchSaveBtn?.addEventListener('click', closeBatchModal);
+
+                expiredModal?.addEventListener('click', (event) => {
+                    if (event.target === expiredModal) {
+                        closeExpiredModal();
+                    }
+                });
+
+                batchModal?.addEventListener('click', (event) => {
+                    if (event.target === batchModal) {
+                        closeBatchModal();
+                    }
+                });
+
+                batchTabButtons.forEach((button) => {
+                    button.addEventListener('click', () => {
+                        batchTabButtons.forEach((tab) => {
+                            tab.classList.remove('bg-red-700', 'text-white', 'font-semibold');
+                            tab.classList.add('bg-red-50', 'text-red-700');
+                        });
+                        batchPanels.forEach((panel) => panel.classList.add('hidden'));
+
+                        button.classList.remove('bg-red-50', 'text-red-700');
+                        button.classList.add('bg-red-700', 'text-white', 'font-semibold');
+                        document.getElementById(button.dataset.batchTarget)?.classList.remove('hidden');
+                    });
+                });
+            </script>
+        @endpush
 @endsection

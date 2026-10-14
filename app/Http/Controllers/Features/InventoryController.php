@@ -10,6 +10,10 @@ use Illuminate\Http\Request;
 /** Lists and maintains inventory records stored in Firebase. */
 class InventoryController extends Controller
 {
+    private const DEFAULT_MINIMUM_STOCK = 50;
+    private const NEAR_EXPIRY_MONTHS = 3;
+    private const MINIMUM_STANDARD_RELIEF_PACKS = 1;
+
     /** Convert Firebase's keyed records into view-ready items while retaining each record ID. */
     private function normalizeInventoryItems($inventoryData)
     {
@@ -31,7 +35,8 @@ class InventoryController extends Controller
     public function index(Request $request, FirebaseService $firebase, ?ReliefPackCalculator $reliefPackCalculator = null)
     {
         $reliefPackCalculator ??= new ReliefPackCalculator();
-        $inventoryItems = $this->normalizeInventoryItems($firebase->getInventory());
+        $allInventoryItems = $this->normalizeInventoryItems($firebase->getInventory());
+        $inventoryItems = $allInventoryItems;
         $batchGroups = $inventoryItems
             ->filter(fn ($item) => filled($item['batch'] ?? null))
             ->groupBy(fn ($item) => (string) $item['batch'])
@@ -61,27 +66,59 @@ class InventoryController extends Controller
                 }
 
                 if ($request->status === 'near_expiry') {
-                    return $expirationDate && \Carbon\Carbon::parse($expirationDate)->between($today, $today->copy()->addDays(30));
+                    return $expirationDate && \Carbon\Carbon::parse($expirationDate)->between($today, $today->copy()->addMonths(self::NEAR_EXPIRY_MONTHS));
                 }
 
-                return !$expirationDate || \Carbon\Carbon::parse($expirationDate)->gt($today->copy()->addDays(30));
+                return !$expirationDate || \Carbon\Carbon::parse($expirationDate)->gt($today->copy()->addMonths(self::NEAR_EXPIRY_MONTHS));
             });
         }
 
         $inventoryItems = $inventoryItems->sortBy(fn($item) => $item['name'] ?? '')->values();
-
         $today = now()->startOfDay();
+        $activeInventoryItems = $allInventoryItems->reject(function ($item) use ($today) {
+            $expirationDate = $item['expirationDate'] ?? null;
+
+            return $expirationDate && \Carbon\Carbon::parse($expirationDate)->lt($today);
+        });
+        $lowStockAlerts = $activeInventoryItems
+            ->filter(fn ($item) => (int) ($item['stock'] ?? 0) <= (int) ($item['minimumStock'] ?? self::DEFAULT_MINIMUM_STOCK))
+            ->values();
+        $nearExpiryAlerts = $activeInventoryItems
+            ->filter(function ($item) use ($today) {
+                $expirationDate = $item['expirationDate'] ?? null;
+
+                return $expirationDate && \Carbon\Carbon::parse($expirationDate)->between($today, $today->copy()->addMonths(self::NEAR_EXPIRY_MONTHS));
+            })
+            ->values();
+        $standardReliefPackSupply = $reliefPackCalculator->count($activeInventoryItems);
+        $minimumStandardReliefPacks = self::MINIMUM_STANDARD_RELIEF_PACKS;
+        $inventoryListItems = $inventoryItems
+            ->reject(function ($item) use ($today) {
+                $expirationDate = $item['expirationDate'] ?? null;
+
+                return $expirationDate && \Carbon\Carbon::parse($expirationDate)->lt($today);
+            })
+            ->groupBy(fn ($item) => mb_strtolower(trim($item['name'] ?? 'Unnamed Item')))
+            ->map(function ($items) {
+                $item = $items->first();
+                $item['records'] = $items->values();
+                $item['stock'] = $items->sum(fn ($item) => (int) ($item['stock'] ?? 0));
+
+                return $item;
+            })
+            ->values();
+
         $totalItems = $inventoryItems->count();
-        $lowStockItems = $inventoryItems->filter(fn($item) => (int) ($item['stock'] ?? 0) <= 50)->count();
+        $lowStockItems = $inventoryItems->filter(fn($item) => (int) ($item['stock'] ?? 0) <= (int) ($item['minimumStock'] ?? self::DEFAULT_MINIMUM_STOCK))->count();
         $goodItems = $inventoryItems->filter(function ($item) use ($today) {
             $expirationDate = $item['expirationDate'] ?? null;
 
-            return !$expirationDate || \Carbon\Carbon::parse($expirationDate)->gt($today->copy()->addDays(30));
+            return !$expirationDate || \Carbon\Carbon::parse($expirationDate)->gt($today->copy()->addMonths(self::NEAR_EXPIRY_MONTHS));
         })->count();
         $nearExpiryItems = $inventoryItems->filter(function ($item) use ($today) {
             $expirationDate = $item['expirationDate'] ?? null;
 
-            return $expirationDate && \Carbon\Carbon::parse($expirationDate)->between($today, $today->copy()->addDays(30));
+            return $expirationDate && \Carbon\Carbon::parse($expirationDate)->between($today, $today->copy()->addMonths(self::NEAR_EXPIRY_MONTHS));
         })->count();
         $expiredItems = $inventoryItems->filter(function ($item) use ($today) {
             $expirationDate = $item['expirationDate'] ?? null;
@@ -106,7 +143,12 @@ class InventoryController extends Controller
 
         return view('features.inventory.index', compact(
             'inventoryItems',
+            'inventoryListItems',
             'batchGroups',
+            'lowStockAlerts',
+            'nearExpiryAlerts',
+            'standardReliefPackSupply',
+            'minimumStandardReliefPacks',
             'totalItems',
             'lowStockItems',
             'goodItems',
@@ -129,9 +171,12 @@ class InventoryController extends Controller
             'category' => 'required|string',
             'unit' => 'required|string',
             'stock' => 'required|integer|min:0',
+            'minimumStock' => 'nullable|integer|min:0',
             'received' => 'nullable|date',
             'expirationDate' => 'nullable|date',
         ]);
+
+        $validated['minimumStock'] = (int) ($validated['minimumStock'] ?? self::DEFAULT_MINIMUM_STOCK);
 
         $firebase->createInventory($validated);
 
@@ -146,11 +191,16 @@ class InventoryController extends Controller
             'category' => 'required|string',
             'unit' => 'required|string',
             'stock' => 'required|integer|min:0',
+            'minimumStock' => 'nullable|integer|min:0',
             'received' => 'nullable|date',
             'expirationDate' => 'nullable|date',
         ]);
 
-        $firebase->updateInventory($id, $validated);
+        $existingItems = $firebase->getInventory();
+        $existingItem = is_array($existingItems) ? ($existingItems[$id] ?? []) : [];
+        $validated['minimumStock'] = (int) ($validated['minimumStock'] ?? $existingItem['minimumStock'] ?? self::DEFAULT_MINIMUM_STOCK);
+
+        $firebase->updateInventory($id, array_merge($existingItem, $validated));
 
         return redirect()->back()->with('success', 'Item updated successfully');
     }

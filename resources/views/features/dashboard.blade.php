@@ -55,7 +55,7 @@
                 </div>
             </div>
 
-            <!-- Occupied Tents -->
+            <!-- Total Tents -->
             <div class="bg-white rounded-[20px] border-[3px] border-[#8a1c1c] p-4 flex items-center shadow-sm w-full">
                 <div class="shrink-0 mr-4">
                     <div
@@ -64,8 +64,10 @@
                     </div>
                 </div>
                 <div>
-                    <p class="text-xs text-gray-700 mb-0.5 whitespace-nowrap">Occupied Tents</p>
-                    <p class="text-[28px] leading-none font-medium">{{ number_format($occupiedTentsCount) }}</p>
+                    <p class="text-xs text-gray-700 mb-0.5 whitespace-nowrap">Total Tents</p>
+                    <p class="text-[28px] leading-none font-medium">
+                        {{ number_format($occupiedTentsCount) }}/<span id="total-tents-count">...</span>
+                    </p>
                 </div>
             </div>
 
@@ -253,6 +255,12 @@
     @push('scripts')
         <script type="module">
             import { barangayList } from '/js/barangayList.js';
+
+            const totalTents = barangayList.reduce(
+                (total, barangay) => total + Object.keys(barangay.tents).length,
+                0
+            );
+            document.getElementById('total-tents-count').textContent = totalTents.toLocaleString();
 
             const barangayMap = {};
             barangayList.forEach(b => {

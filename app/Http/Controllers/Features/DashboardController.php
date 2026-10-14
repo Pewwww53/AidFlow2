@@ -68,8 +68,6 @@ class DashboardController extends Controller
         $forecastFfp = $predictNextYear('ffp');
         $forecastFamilyHeads = $predictNextYear('fam');
 
-        $tents = collect($firebase->getTents());
-
         $reliefPacks = collect($firebase->getReliefPacks());
 
         $recentScannedTents = collect($firebase->getScans());

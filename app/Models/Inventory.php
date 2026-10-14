@@ -14,6 +14,7 @@ class Inventory extends Model
         'category',
         'unit',
         'stock',
+        'minimumStock',
         'received',
         'expirationDate',
     ];
