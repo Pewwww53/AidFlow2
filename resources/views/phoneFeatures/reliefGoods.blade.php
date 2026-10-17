@@ -101,20 +101,62 @@
         </form>
     </main>
 
+    <div id="scan-result-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4"
+        role="alertdialog" aria-modal="true" aria-labelledby="scan-result-title"
+        aria-describedby="scan-result-message">
+        <div class="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl sm:p-8">
+            <h2 id="scan-result-title" class="text-2xl font-bold text-gray-900"></h2>
+            <p id="scan-result-message" class="mt-3 text-base text-gray-700"></p>
+            <button id="continue-scanning" type="button"
+                class="mt-6 w-full rounded-xl bg-red-600 px-5 py-3 text-lg font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300">
+                Continue scanning
+            </button>
+        </div>
+    </div>
+
     <script>
         const scannerStatus = document.getElementById('scanner-status');
+        const scanResultModal = document.getElementById('scan-result-modal');
+        const scanResultTitle = document.getElementById('scan-result-title');
+        const scanResultMessage = document.getElementById('scan-result-message');
+        const continueScanningButton = document.getElementById('continue-scanning');
         const reliefScanUrl = @json(route('phoneFeatures.reliefGoods.scan', absolute: false));
         const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
         let lastScannedCode = null;
         let lastScannedAt = 0;
         let isSubmitting = false;
+        let scanPaused = false;
+
+        function showScanResult(title, message) {
+            scanPaused = true;
+            scanResultTitle.textContent = title;
+            scanResultMessage.textContent = message;
+            scanResultModal.classList.remove('hidden');
+            scanResultModal.classList.add('flex');
+            continueScanningButton.focus();
+        }
+
+        continueScanningButton.addEventListener('click', () => {
+            scanResultModal.classList.add('hidden');
+            scanResultModal.classList.remove('flex');
+            scanPaused = false;
+            scannerStatus.textContent = 'Align the package QR code inside the frame.';
+            scannerStatus.classList.remove('font-medium', 'text-blue-600', 'text-green-600', 'text-red-600');
+            scannerStatus.classList.add('text-gray-600');
+        });
 
         async function onScanSuccess(decodedText) {
+            if (scanPaused || isSubmitting) return;
+
             const packageId = decodedText.trim();
             const now = Date.now();
 
-            if (!/^#\d+$/.test(packageId) || isSubmitting ||
-                (packageId === lastScannedCode && now - lastScannedAt < 2000)) {
+            if (!/^#\d+$/.test(packageId)) {
+                showScanResult('Scan failed', 'This QR code is not a valid relief package code.');
+                return;
+            }
+
+            if (packageId === lastScannedCode && now - lastScannedAt < 2000) {
                 return;
             }
 
@@ -135,15 +177,30 @@
                     },
                     body: JSON.stringify({ package_id: packageId }),
                 });
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
-                scannerStatus.textContent = result.message || 'Relief pack processed.';
                 scannerStatus.classList.remove('text-blue-600', 'text-red-600');
-                scannerStatus.classList.add(response.ok ? 'text-green-600' : 'text-red-600');
+                if (!response.ok || !result?.success) {
+                    const message = result?.message || 'The server could not record this scan. Please try again.';
+                    scannerStatus.textContent = message;
+                    scannerStatus.classList.add('text-red-600');
+                    showScanResult('Scan failed', message);
+                } else if (result.already_scanned) {
+                    scannerStatus.textContent = result.message;
+                    scannerStatus.classList.add('text-green-600');
+                    showScanResult('Already distributed', result.message);
+                } else {
+                    const message = result.message || 'Relief pack processed.';
+                    scannerStatus.textContent = message;
+                    scannerStatus.classList.add('text-green-600');
+                    showScanResult('Relief pack distributed', message);
+                }
             } catch (error) {
-                scannerStatus.textContent = error;
+                console.error(error);
+                scannerStatus.textContent = 'A network or server error prevented this scan.';
                 scannerStatus.classList.remove('text-blue-600', 'text-green-600');
                 scannerStatus.classList.add('text-red-600');
+                showScanResult('Scan failed', 'A network or server error prevented this scan. Please try again.');
             } finally {
                 isSubmitting = false;
             }

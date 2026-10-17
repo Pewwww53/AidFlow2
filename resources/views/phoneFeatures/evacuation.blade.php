@@ -88,8 +88,6 @@
                     <p id="scanner-status" class="mt-3 text-center text-sm text-gray-600">Align the QR code inside the
                         frame for
                         best results.</p>
-                    <div id="scan-result" role="status" aria-live="polite"
-                        class="mt-3 hidden text-center text-sm font-medium text-green-600"></div>
                 </div>
             </div>
         </div>
@@ -107,18 +105,45 @@
         </form>
     </main>
 
+    <div id="scan-result-modal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/60 p-4"
+        role="alertdialog" aria-modal="true" aria-labelledby="scan-result-title"
+        aria-describedby="scan-result-message">
+        <div class="w-full max-w-md rounded-3xl bg-white p-6 text-center shadow-2xl sm:p-8">
+            <h2 id="scan-result-title" class="text-2xl font-bold text-gray-900"></h2>
+            <p id="scan-result-message" class="mt-3 text-base text-gray-700"></p>
+            <button id="continue-scanning" type="button"
+                class="mt-6 w-full rounded-xl bg-red-600 px-5 py-3 text-lg font-semibold text-white hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-300">
+                Continue scanning
+            </button>
+        </div>
+    </div>
+
     <script type="module">
         import { barangayList } from '/js/barangayList.js';
         const scanStatus = document.getElementById('scanner-status');
-        const scanResult = document.getElementById('scan-result');
+        const scanResultModal = document.getElementById('scan-result-modal');
+        const scanResultTitle = document.getElementById('scan-result-title');
+        const scanResultMessage = document.getElementById('scan-result-message');
+        const continueScanningButton = document.getElementById('continue-scanning');
         let scanInProgress = false;
+        let scanPaused = false;
         let lastScan = { code: null, time: 0 };
 
-        function showMessage(message, isSuccess = true) {
-            scanResult.classList.remove('hidden', 'text-green-600', 'text-red-600');
-            scanResult.classList.add(isSuccess ? 'text-green-600' : 'text-red-600');
-            scanResult.textContent = message;
+        function showScanResult(title, message) {
+            scanPaused = true;
+            scanResultTitle.textContent = title;
+            scanResultMessage.textContent = message;
+            scanResultModal.classList.remove('hidden');
+            scanResultModal.classList.add('flex');
+            continueScanningButton.focus();
         }
+
+        continueScanningButton.addEventListener('click', () => {
+            scanResultModal.classList.add('hidden');
+            scanResultModal.classList.remove('flex');
+            scanPaused = false;
+            scanStatus.textContent = 'Align the QR code inside the frame for best results.';
+        });
 
         function findBarangay(tentCode) {
             return barangayList.find(barangay =>
@@ -131,10 +156,9 @@
             scanInProgress = true;
 
             try {
-                let barangay = findBarangay(tentCode);
+                const barangay = findBarangay(tentCode);
                 if (!barangay) {
-                    showMessage(`Tent ${tentCode} not found in any barangay.`, false);
-                    scanInProgress = false;
+                    showScanResult('Scan failed', `Tent ${tentCode} was not found in any barangay.`);
                     return;
                 }
                 const response = await fetch('{{ route("phoneFeatures.evacuation.scan", absolute: false) }}', {
@@ -161,35 +185,44 @@
                         data = JSON.parse(text);
                     } catch (e) {
                         console.error('Not JSON:', text.slice(0, 300));
-                        showMessage('Session expired or server redirected the request. Please log in again.', false);
+                        showScanResult('Scan failed', 'The server returned an unexpected response. Please log in again and try again.');
                         return;
                     }
                 }
 
                 if (!response.ok) {
-                    showMessage((data && data.message) || 'Server returned an error.', false);
+                    showScanResult('Scan failed', data?.message || 'The server could not record this scan. Please try again.');
                     return;
                 }
 
                 if (data?.requires_confirmation) {
                     if (window.confirm(data.message)) {
                         scanInProgress = false;
-                        return submitScan(tentCode, true);
+                        await submitScan(tentCode, true);
+                        return;
                     }
-                    showMessage(`Tent ${tentCode} remains occupied.`, false);
-                } else if (data?.success) {
-                    showMessage(data.message);
-                    scanInProgress = false;
+                    showScanResult('Scan cancelled', `Tent ${tentCode} remains occupied. No changes were made.`);
+                    return;
+                }
+
+                if (data?.success && data.action === 'occupied') {
+                    showScanResult('Tent occupied', `Tent ${tentCode} was successfully marked occupied.`);
+                } else if (data?.success && data.action === 'unoccupied') {
+                    showScanResult('Tent marked vacant', `Tent ${tentCode} was successfully marked vacant.`);
                 } else {
-                    showMessage(data?.message || 'Unable to record scan.', false);
+                    showScanResult('Scan failed', data?.message || 'Unable to record this scan. Please try again.');
                 }
             } catch (error) {
                 console.error(error);
-                showMessage(error, false);
+                showScanResult('Scan failed', 'A network or server error prevented this scan. Please try again.');
+            } finally {
+                scanInProgress = false;
             }
         }
 
         function onScanSuccess(decodedText) {
+            if (scanPaused || scanInProgress) return;
+
             const tentCode = decodedText.trim().toUpperCase();
             if (!tentCode) return;
 
