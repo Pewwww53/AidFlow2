@@ -11,13 +11,6 @@ class FirebaseAuth
     {
         
         if (!session()->has('user')) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your session has expired. Please log in again.',
-                ], 401);
-            }
-
             return redirect()->route('login');
         }
 
