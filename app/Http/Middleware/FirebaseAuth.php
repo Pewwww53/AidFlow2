@@ -9,7 +9,15 @@ class FirebaseAuth
 {
     public function handle(Request $request, Closure $next)
     {
+        
         if (!session()->has('user')) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Your session has expired. Please log in again.',
+                ], 401);
+            }
+
             return redirect()->route('login');
         }
 
