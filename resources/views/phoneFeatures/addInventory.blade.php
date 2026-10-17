@@ -94,13 +94,10 @@
                 <label for="category" class="ml-4 font-bold">Category</label>
                 <select id="category" name="category" required
                     class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg text-[#1F1F1F] focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100">
-                    <option value="" disabled selected>Category</option>
-                    <option>Food</option>
-                    <option>Medicine</option>
-                    <option>Drink</option>
-                    <option>Equipment</option>
-                    <option>Hygiene</option>
-                    <option>Other</option>
+                    <option value="" disabled {{ old('category') ? '' : 'selected' }}>Category</option>
+                    @foreach (['Food', 'Medicine', 'Drink', 'Equipment', 'Hygiene', 'Other'] as $category)
+                        <option value="{{ $category }}" {{ old('category') === $category ? 'selected' : '' }}>{{ $category }}</option>
+                    @endforeach
                 </select>
             </div>
 
@@ -160,9 +157,10 @@
                     <input id="date_received" name="date_received" type="date"
                         class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg text-[#1F1F1F] focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100" />
                 </div>
-                <div>
+                <div id="expirationDateField" class="hidden">
                     <label for="expiration_date" class="ml-4 font-bold">Expiration Date</label>
                     <input id="expiration_date" name="expiration_date" type="date"
+                        value="{{ old('expiration_date', old('expirationDate')) }}"
                         class="w-full rounded-[28px] border border-gray-300 bg-gray-100 px-5 py-4 text-lg text-[#1F1F1F] focus:border-red-500 focus:outline-none focus:ring-2 focus:ring-red-100" />
                 </div>
             </div>
@@ -194,6 +192,10 @@
         const newBatchInput = document.getElementById('new_batch');
         const itemSelect = document.getElementById('item_name');
         const otherItemInput = document.getElementById('other_item_name');
+        const categorySelect = document.getElementById('category');
+        const expirationDateField = document.getElementById('expirationDateField');
+        const expirationDateInput = document.getElementById('expiration_date');
+        const categoriesWithExpiration = @json($expirationCategories);
 
         function updateItemFields() {
             const isOtherItem = itemSelect.value === 'Other';
@@ -209,10 +211,18 @@
             newBatchInput.required = useNewBatch;
         }
 
+        function updateExpirationDateField() {
+            const requiresExpirationDate = categoriesWithExpiration.includes(categorySelect.value);
+            expirationDateField.classList.toggle('hidden', !requiresExpirationDate);
+            expirationDateInput.required = requiresExpirationDate;
+        }
+
         batchOptions.forEach(option => option.addEventListener('change', updateBatchFields));
         itemSelect.addEventListener('change', updateItemFields);
+        categorySelect.addEventListener('change', updateExpirationDateField);
         updateItemFields();
         updateBatchFields();
+        updateExpirationDateField();
     </script>
 </body>
 

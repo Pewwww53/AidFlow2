@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 /** Supplies the mobile inventory form and creates inventory records from its inputs. */
 class AddInventoryController extends Controller
 {
+    private const EXPIRATION_CATEGORIES = ['Food', 'Medicine', 'Drink', 'Hygiene'];
+
     public function __construct()
     {
     }
@@ -24,12 +26,23 @@ class AddInventoryController extends Controller
             ->unique()
             ->values();
 
-        return view('phoneFeatures.addInventory', compact('batches'));
+        return view('phoneFeatures.addInventory', [
+            'batches' => $batches,
+            'expirationCategories' => self::EXPIRATION_CATEGORIES,
+        ]);
     }
 
     /** Normalize supported form field names and save the validated inventory item. */
     public function store(Request $request, FirebaseService $firebase)
     {
+        $expirationRequired = in_array($request->input('category'), self::EXPIRATION_CATEGORIES, true);
+        $expirationDateRules = $expirationRequired
+            ? 'nullable|date|required_without:expirationDate'
+            : 'nullable|date';
+        $expirationDateAliasRules = $expirationRequired
+            ? 'nullable|date|required_without:expiration_date'
+            : 'nullable|date';
+
         $validated = $request->validate([
             'item_name' => 'nullable|string|required_without:name',
             'other_item_name' => 'nullable|string|required_if:item_name,Other',
@@ -41,8 +54,8 @@ class AddInventoryController extends Controller
             'unit' => 'required|string',
             'date_received' => 'nullable|date|required_without:received',
             'received' => 'nullable|date|required_without:date_received',
-            'expiration_date' => 'nullable|date|required_without:expirationDate',
-            'expirationDate' => 'nullable|date|required_without:expiration_date',
+            'expiration_date' => $expirationDateRules,
+            'expirationDate' => $expirationDateAliasRules,
             'batch_option' => 'required|in:existing,new',
             'batch' => 'nullable|string|max:100|required_if:batch_option,existing',
             'new_batch' => 'nullable|string|max:100|required_if:batch_option,new',
