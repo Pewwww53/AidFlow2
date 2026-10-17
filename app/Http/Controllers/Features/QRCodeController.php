@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ScanEvent;
 use App\Models\OccupiedTent;
 use App\Services\FirebaseService;
+use App\Services\ReliefPackCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,9 +19,11 @@ class QRCodeController extends Controller
     }
 
     /** Display the QR scanning page. */
-    public function index()
+    public function index(FirebaseService $firebase, ReliefPackCalculator $reliefPackCalculator)
     {
-        return view('features.qrcode.index');
+        $availableReliefPacks = $reliefPackCalculator->count($firebase->getInventory());
+
+        return view('features.qrcode.index', compact('availableReliefPacks'));
     }
 
     /** Return the next available relief-pack number without reserving it. */

@@ -205,18 +205,21 @@
                 <h2 class="text-lg text-[#be3d3d] mb-5 flex items-center gap-2">
                     <i class="fas fa-chart-line"></i> Forecast
                 </h2>
+                <p class="text-gray-600 text-sm mb-4">Forecast for {{ $forecastYear }}</p>
 
                 <div class="mb-5">
-                    <p class="text-gray-900 text-sm mb-1">Predicted Family Head Count</p>
-                    <div class="flex items-center gap-6">
-                        <span class="text-4xl font-bold text-[#cc2929]">{{ number_format($forecastFamilyHeads) }}</span>
+                    <p class="text-gray-900 text-sm mb-2">Predicted Family Head Count</p>
+                    <div class="flex items-baseline gap-4">
+                        <span class="text-4xl font-bold text-[#cc2929]">{{ number_format($forecastAnnualFamilyHeads) }}</span>
+                        <span class="text-sm text-gray-600">{{ number_format($forecastFamilyHeads) }} average per month</span>
                     </div>
                 </div>
 
                 <div class="mb-6 border-t border-gray-200 pt-5">
-                    <p class="text-gray-900 text-sm mb-1">Estimated Family Food Packs Needed</p>
-                    <div class="flex items-center gap-6">
-                        <span class="text-4xl font-bold text-[#cc2929]">{{ number_format($forecastFfp) }}</span>
+                    <p class="text-gray-900 text-sm mb-2">Estimated Family Food Packs Needed</p>
+                    <div class="flex items-baseline gap-4">
+                        <span class="text-4xl font-bold text-[#cc2929]">{{ number_format($forecastAnnualFfp) }}</span>
+                        <span class="text-sm text-gray-600">{{ number_format($forecastFfp) }} average per month</span>
                     </div>
                 </div>
 

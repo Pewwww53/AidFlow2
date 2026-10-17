@@ -127,7 +127,26 @@
         const continueScanningButton = document.getElementById('continue-scanning');
         let scanInProgress = false;
         let scanPaused = false;
+        let scanner = null;
         let lastScan = { code: null, time: 0 };
+
+        function startScanner() {
+            if (scanner || typeof Html5QrcodeScanner === 'undefined') return;
+
+            scanner = new Html5QrcodeScanner('scanner', {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                rememberLastUsedCamera: true,
+            }, false);
+            scanner.render(onScanSuccess, onScanFailure);
+        }
+
+        async function closeScanner() {
+            if (!scanner) return;
+
+            await scanner.clear();
+            scanner = null;
+        }
 
         function showScanResult(title, message) {
             scanPaused = true;
@@ -141,8 +160,9 @@
         continueScanningButton.addEventListener('click', () => {
             scanResultModal.classList.add('hidden');
             scanResultModal.classList.remove('flex');
+            startScanner();
             scanPaused = false;
-            scanStatus.textContent = 'Align the QR code inside the frame for best results.';
+            scanStatus.textContent = 'Tap Start Scanning to scan another tent.';
         });
 
         function findBarangay(tentCode) {
@@ -220,7 +240,7 @@
             }
         }
 
-        function onScanSuccess(decodedText) {
+        async function onScanSuccess(decodedText) {
             if (scanPaused || scanInProgress) return;
 
             const tentCode = decodedText.trim().toUpperCase();
@@ -230,8 +250,15 @@
             if (lastScan.code === tentCode && now - lastScan.time < 2500) return;
             lastScan = { code: tentCode, time: now };
 
+            scanPaused = true;
             scanStatus.textContent = `Scanned: ${tentCode}`;
-            submitScan(tentCode);
+            try {
+                await closeScanner();
+                await submitScan(tentCode);
+            } catch (error) {
+                console.error(error);
+                showScanResult('Scanner error', 'The camera could not be stopped. Please reload the page before scanning again.');
+            }
         }
 
         function onScanFailure() {
@@ -239,12 +266,7 @@
         }
 
         if (typeof Html5QrcodeScanner !== 'undefined') {
-            const scanner = new Html5QrcodeScanner('scanner', {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
-                rememberLastUsedCamera: true,
-            }, false);
-            scanner.render(onScanSuccess, onScanFailure);
+            startScanner();
         } else {
             scanStatus.textContent = 'Camera scanner is unavailable in this browser.';
         }

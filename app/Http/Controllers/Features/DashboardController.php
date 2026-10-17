@@ -13,7 +13,7 @@ class DashboardController extends Controller
     {
     }
 
-    /** Aggregate Firebase records and annual dataset totals for the dashboard view. */
+    /** Aggregate Firebase records and monthly forecast averages for the dashboard view. */
     public function index(FirebaseService $firebase, ?ReliefPackCalculator $reliefPackCalculator = null)
     {
         $reliefPackCalculator ??= new ReliefPackCalculator();
@@ -65,8 +65,11 @@ class DashboardController extends Controller
             return max(0, (int) round($intercept + ($slope * $nextYear)));
         };
 
-        $forecastFfp = $predictNextYear('ffp');
-        $forecastFamilyHeads = $predictNextYear('fam');
+        $forecastYear = (int) $annualForecastTotals->keys()->max() + 1;
+        $forecastAnnualFfp = $predictNextYear('ffp');
+        $forecastAnnualFamilyHeads = $predictNextYear('fam');
+        $forecastFfp = (int) round($forecastAnnualFfp / 12);
+        $forecastFamilyHeads = (int) round($forecastAnnualFamilyHeads / 12);
 
         $reliefPacks = collect($firebase->getReliefPacks());
 
@@ -141,6 +144,12 @@ class DashboardController extends Controller
             'forecastFfp' => $forecastFfp,
 
             'forecastFamilyHeads' => $forecastFamilyHeads,
+
+            'forecastAnnualFfp' => $forecastAnnualFfp,
+
+            'forecastAnnualFamilyHeads' => $forecastAnnualFamilyHeads,
+
+            'forecastYear' => $forecastYear,
 
             'auditLogs' => $auditLogs,
         ]);

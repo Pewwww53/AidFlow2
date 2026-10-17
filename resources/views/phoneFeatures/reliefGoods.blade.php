@@ -126,6 +126,29 @@
         let lastScannedAt = 0;
         let isSubmitting = false;
         let scanPaused = false;
+        let scanner = null;
+
+        function startScanner() {
+            if (scanner || typeof Html5QrcodeScanner === 'undefined') return;
+
+            scanner = new Html5QrcodeScanner('scanner', {
+                fps: 10,
+                qrbox: (width, height) => {
+                    const size = Math.floor(Math.min(width, height) * 0.7);
+                    return { width: size, height: size };
+                },
+                rememberLastUsedCamera: true,
+                aspectRatio: 4 / 3,
+            }, false);
+            scanner.render(onScanSuccess, onScanFailure);
+        }
+
+        async function closeScanner() {
+            if (!scanner) return;
+
+            await scanner.clear();
+            scanner = null;
+        }
 
         function showScanResult(title, message) {
             scanPaused = true;
@@ -139,8 +162,9 @@
         continueScanningButton.addEventListener('click', () => {
             scanResultModal.classList.add('hidden');
             scanResultModal.classList.remove('flex');
+            startScanner();
             scanPaused = false;
-            scannerStatus.textContent = 'Align the package QR code inside the frame.';
+            scannerStatus.textContent = 'Tap Start Scanning to scan another package.';
             scannerStatus.classList.remove('font-medium', 'text-blue-600', 'text-green-600', 'text-red-600');
             scannerStatus.classList.add('text-gray-600');
         });
@@ -152,6 +176,14 @@
             const now = Date.now();
 
             if (!/^#\d+$/.test(packageId)) {
+                scanPaused = true;
+                try {
+                    await closeScanner();
+                } catch (error) {
+                    console.error(error);
+                    showScanResult('Scanner error', 'The camera could not be stopped. Please reload the page before scanning again.');
+                    return;
+                }
                 showScanResult('Scan failed', 'This QR code is not a valid relief package code.');
                 return;
             }
@@ -162,12 +194,14 @@
 
             lastScannedCode = packageId;
             lastScannedAt = now;
+            scanPaused = true;
             isSubmitting = true;
             scannerStatus.textContent = `Processing relief pack ${packageId}...`;
             scannerStatus.classList.remove('text-gray-600', 'text-red-600');
             scannerStatus.classList.add('font-medium', 'text-blue-600');
 
             try {
+                await closeScanner();
                 const response = await fetch(reliefScanUrl, {
                     method: 'POST',
                     headers: {
@@ -197,10 +231,10 @@
                 }
             } catch (error) {
                 console.error(error);
-                scannerStatus.textContent = 'A network or server error prevented this scan.';
+                scannerStatus.textContent = 'A camera, network, or server error prevented this scan.';
                 scannerStatus.classList.remove('text-blue-600', 'text-green-600');
                 scannerStatus.classList.add('text-red-600');
-                showScanResult('Scan failed', 'A network or server error prevented this scan. Please try again.');
+                showScanResult('Scan failed', 'A camera, network, or server error prevented this scan. Please try again.');
             } finally {
                 isSubmitting = false;
             }
@@ -211,17 +245,7 @@
         }
 
         if (typeof Html5QrcodeScanner !== 'undefined') {
-            const scanner = new Html5QrcodeScanner('scanner', {
-                fps: 10,
-                qrbox: (width, height) => {
-                    const size = Math.floor(Math.min(width, height) * 0.7);
-                    return { width: size, height: size };
-                },
-                rememberLastUsedCamera: true,
-                aspectRatio: 4 / 3,
-            }, false);
-
-            scanner.render(onScanSuccess, onScanFailure);
+            startScanner();
         } else {
             scannerStatus.textContent = 'Camera scanner is unavailable in this browser.';
             scannerStatus.classList.add('text-red-600');

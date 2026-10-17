@@ -24,8 +24,11 @@
                 </div>
 
                 <div id="foodField" class="space-y-2 hidden">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Relief Pack Number</label>
-                    <div id="foodPackDisplay" class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-900 font-medium">Relief Pack: #1</div>
+                    <label for="foodPackQuantity" class="block text-sm font-medium text-gray-700 mb-1">Number of Relief Pack QR Codes</label>
+                    <input id="foodPackQuantity" type="number" min="1" max="{{ $availableReliefPacks }}" step="1" value="{{ $availableReliefPacks > 0 ? 1 : '' }}" @disabled($availableReliefPacks === 0) required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <p id="availableReliefPacks" class="text-sm text-gray-600">
+                        {{ $availableReliefPacks > 0 ? "{$availableReliefPacks} relief pack(s) available." : 'No complete relief packs are currently available.' }}
+                    </p>
                 </div>
 
                 <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
@@ -50,10 +53,11 @@
     const tentField = document.getElementById('tentField');
     const foodField = document.getElementById('foodField');
     const tentCodeSelect = document.getElementById('tentCodeSelect');
-    const foodPackDisplay = document.getElementById('foodPackDisplay');
+    const foodPackQuantity = document.getElementById('foodPackQuantity');
     const qrPreviewLabel = document.getElementById('qrPreviewLabel');
     const qrOutput = document.getElementById('qrOutput');
     const qrCode = document.getElementById('qrCode');
+    const availableReliefPacks = @json($availableReliefPacks);
     const PACK_COUNTER_KEY = 'aidflow_relief_pack_counter';
 
     function buildTentOptions() {
@@ -76,7 +80,7 @@
 
     function getNextFoodPackNumber() {
         const current = Number(localStorage.getItem(PACK_COUNTER_KEY) || '1');
-        const next = Number.isFinite(current) && current > 0 ? current : 1;
+        const next = Number.isSafeInteger(current) && current > 0 ? current : 1;
         localStorage.setItem(PACK_COUNTER_KEY, String(next + 1));
         return next;
     }
@@ -86,31 +90,76 @@
 
         tentField.classList.toggle('hidden', isFoodPack);
         foodField.classList.toggle('hidden', !isFoodPack);
-        qrPreviewLabel.textContent = isFoodPack ? 'Food Pack' : 'Tent Code';
-
-        if (isFoodPack) {
-            foodPackDisplay.textContent = `Relief Pack: #1`;
-        }
+        foodPackQuantity.required = isFoodPack;
     }
 
     function generateQrCode() {
         const isFoodPack = qrType.value === 'food';
 
-        const qrText = isFoodPack
-            ? `#1`
-            : `${tentCodeSelect.value}`;
+        if (!isFoodPack) {
+            const qrText = tentCodeSelect.value;
+            const qr = qrcode(0, 'M');
+            qr.addData(qrText);
+            qr.make();
 
-        const qr = qrcode(0, 'M');
-        qr.addData(qrText);
-        qr.make();
+            qrCode.innerHTML = qr.createImgTag(10, 10);
+            qrCode.className = 'bg-white p-4 rounded-lg shadow-sm min-h-[220px] min-w-[220px] flex items-center justify-center';
+            qrPreviewLabel.textContent = 'Tent Code';
+            qrOutput.textContent = qrText;
+            return;
+        }
 
-        qrCode.innerHTML = qr.createImgTag(10, 10);
-        qrOutput.textContent = qrText;
+        const quantity = Number(foodPackQuantity.value);
+        if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > availableReliefPacks) {
+            foodPackQuantity.setCustomValidity(
+                availableReliefPacks > 0
+                    ? `Enter a whole number between 1 and ${availableReliefPacks}.`
+                    : 'There are no complete relief packs available to generate.'
+            );
+            foodPackQuantity.reportValidity();
+            return;
+        }
+        foodPackQuantity.setCustomValidity('');
+
+        const qrGrid = document.createElement('div');
+        qrGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4 w-full';
+        const packNumbers = [];
+
+        for (let index = 0; index < quantity; index += 1) {
+            const packNumber = getNextFoodPackNumber();
+            const qr = qrcode(0, 'M');
+            qr.addData(`#${packNumber}`);
+            qr.make();
+
+            const card = document.createElement('div');
+            card.className = 'bg-white p-4 rounded-lg shadow-sm flex flex-col items-center';
+            card.innerHTML = qr.createImgTag(6, 6);
+            const label = document.createElement('p');
+            label.className = 'mt-2 text-sm font-semibold text-gray-900';
+            label.textContent = `Relief Pack: #${packNumber}`;
+            card.appendChild(label);
+            qrGrid.appendChild(card);
+            packNumbers.push(packNumber);
+        }
+
+        qrCode.className = 'w-full';
+        qrCode.replaceChildren(qrGrid);
+        qrPreviewLabel.textContent = `${quantity} Relief Pack QR Code${quantity === 1 ? '' : 's'}`;
+        qrOutput.textContent = packNumbers.length === 1
+            ? `#${packNumbers[0]}`
+            : `#${packNumbers[0]} - #${packNumbers[packNumbers.length - 1]}`;
     }
 
     qrType.addEventListener('change', () => {
         updateQrInputState();
-        generateQrCode();
+        if (qrType.value !== 'food') {
+            generateQrCode();
+        } else {
+            qrCode.replaceChildren();
+            qrCode.className = '';
+            qrPreviewLabel.textContent = 'Relief Packs';
+            qrOutput.textContent = 'Enter the number of relief pack QR codes to generate.';
+        }
     });
 
     tentCodeSelect.addEventListener('change', () => {
@@ -121,7 +170,6 @@
 
     document.getElementById('qrForm').addEventListener('submit', (event) => {
         event.preventDefault();
-        updateQrInputState();
         generateQrCode();
     });
 
