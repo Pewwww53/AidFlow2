@@ -204,21 +204,14 @@
                     try {
                         data = JSON.parse(text);
                     } catch (e) {
-                        console.error('Scan endpoint returned a non-JSON response:', {
-                            status: response.status,
-                            contentType: response.headers.get('content-type'),
-                            body: text.slice(0, 300),
-                        });
-                        showScanResult('Scan failed', `The scan endpoint returned an unexpected response (HTTP ${response.status}). Please try again or contact support.`);
+                        console.error('Not JSON:', text.slice(0, 300));
+                        showScanResult('Scan failed', 'The server returned an unexpected response. Please log in again and try again.');
                         return;
                     }
                 }
 
                 if (!response.ok) {
-                    const message = response.status === 401
-                        ? 'Your session has expired. Please log in again and retry the scan.'
-                        : data?.message || 'The server could not record this scan. Please try again.';
-                    showScanResult('Scan failed', message);
+                    showScanResult('Scan failed', data?.message || 'The server could not record this scan. Please try again.');
                     return;
                 }
 
