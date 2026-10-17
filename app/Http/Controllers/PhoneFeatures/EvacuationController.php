@@ -3,8 +3,6 @@
 namespace App\Http\Controllers\PhoneFeatures;
 
 use App\Http\Controllers\Controller;
-use App\Models\OccupiedTent;
-use App\Models\ScanEvent;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 
@@ -62,21 +60,6 @@ class EvacuationController extends Controller
                 'success' => false,
                 'message' => 'Firebase could not record the scan. Please try again.',
             ], 502);
-        }
-
-        ScanEvent::create([
-            'tent_code' => $tentCode,
-            'barangay_code' => $barangayCode,
-            'scanned_at' => $scannedAt,
-        ]);
-
-        if ($willBeOccupied) {
-            OccupiedTent::updateOrCreate(
-                ['tent_code' => $tentCode],
-                ['barangay_code' => $barangayCode]
-            );
-        } else {
-            OccupiedTent::where('tent_code', $tentCode)->delete();
         }
 
         return response()->json([
