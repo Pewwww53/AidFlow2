@@ -205,7 +205,7 @@
                         data = JSON.parse(text);
                     } catch (e) {
                         console.error('Not JSON:', text.slice(0, 300));
-                        showScanResult('Scan failed', text);
+                        showScanResult('Scan failed', 'The server returned an unexpected response. Please log in again and try again.');
                         return;
                     }
                 }
