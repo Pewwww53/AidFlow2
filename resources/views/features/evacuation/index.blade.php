@@ -85,21 +85,21 @@
                     <select id="barangayFilter"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#960505] lg:w-[220px]">
                         <option value="all">All</option>
-                        <option>Balong-Bato</option>
-                        <option>Salapan</option>
-                        <option>West Crame</option>
-                        <option>Greenhills</option>
-                        <option>Santa Lucia</option>
                         <option>Addition Hills</option>
-                        <option>San Perfecto</option>
+                        <option>Balong-Bato</option>
                         <option>Corazon de Jesus</option>
-                        <option>Pasadena</option>
+                        <option>Greenhills</option>
                         <option>Little Baguio</option>
                         <option>Maytunas</option>
-                        <option>Rivera</option>
+                        <option>Pasadena</option>
                         <option>Pedro Cruz</option>
                         <option>Progreso</option>
+                        <option>Rivera</option>
+                        <option>Salapan</option>
+                        <option>San Perfecto</option>
+                        <option>Santa Lucia</option>
                         <option>Tibagan</option>
+                        <option>West Crame</option>
                     </select>
                 </div>
 
