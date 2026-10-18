@@ -25,6 +25,25 @@
             .glow-hover {
                 stroke-width: 3px;
             }
+
+            .leaflet-tooltip.barangay-id-label {
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid rgba(31, 41, 55, 0.35);
+                border-radius: 0.375rem;
+                color: #1f2937;
+                font-size: 0.7rem;
+                font-weight: 700;
+                line-height: 1;
+                padding: 0.1em 0.3em;
+                pointer-events: none;
+                text-align: center;
+                transition: font-size 150ms ease;
+                white-space: nowrap;
+            }
+
+            .leaflet-tooltip.barangay-id-label::before {
+                display: none;
+            }
         </style>
         <div class="flex flex-row flex-wrap lg:flex-nowrap gap-2">
             <!-- Total Inventory -->
@@ -137,7 +156,13 @@
 
             <!-- Evacuation Overview -->
             <div class="bg-white rounded-[20px] border-[3px] border-[#8a1c1c] p-4 shadow-sm flex flex-col w-200">
-                <h2 class="text-lg text-[#be3d3d] mb-3">Evacuation Overview</h2>
+                <div class="flex items-center justify-between gap-3 mb-3">
+                    <h2 class="text-lg text-[#be3d3d]">Evacuation Overview</h2>
+                    <button id="dashboard-label-toggle" type="button" aria-pressed="true"
+                        class="px-3 py-1 border border-[#d97c7c] rounded-full text-xs text-[#1f0000] hover:bg-[#ffbaba] transition">
+                        Hide IDs
+                    </button>
+                </div>
 
                 <!-- Map Area -->
                 <div
@@ -352,6 +377,34 @@
                     minZoom: 12
                 });
 
+                const barangayIdLabels = [];
+                const labelToggle = document.getElementById('dashboard-label-toggle');
+                let labelsVisible = true;
+                labelToggle.addEventListener('click', () => {
+                    labelsVisible = !labelsVisible;
+                    labelToggle.textContent = labelsVisible ? 'Hide IDs' : 'Show IDs';
+                    labelToggle.setAttribute('aria-pressed', String(labelsVisible));
+                    barangayIdLabels.forEach(({ label }) => {
+                        label.getElement()?.classList.toggle('hidden', !labelsVisible);
+                    });
+                });
+                const updateBarangayIdLabelSizes = () => {
+                    barangayIdLabels.forEach(({ layer, label, code }) => {
+                        const bounds = layer.getBounds();
+                        const northWest = map.latLngToContainerPoint(bounds.getNorthWest());
+                        const southEast = map.latLngToContainerPoint(bounds.getSouthEast());
+                        const width = Math.abs(southEast.x - northWest.x);
+                        const height = Math.abs(southEast.y - northWest.y);
+                        const fontSize = Math.max(
+                            6,
+                            Math.min(11, (width - 4) / (code.length * 0.62 + 0.7), (height - 4) / 1.2)
+                        );
+
+                        label.getElement()?.style.setProperty('font-size', `${fontSize}px`);
+                    });
+                };
+                map.on('zoomend resize', updateBarangayIdLabelSizes);
+
                 fetch('/geojson/sanjuan.geojson')
                     .then(r => r.json())
                     .then(data => {
@@ -370,6 +423,20 @@
                             onEachFeature(feature, layer) {
                                 const info = barangayMap[feature.properties.name];
                                 if (!info) return;
+
+                                const idLabel = L.tooltip({
+                                    permanent: true,
+                                    direction: 'center',
+                                    className: 'barangay-id-label',
+                                    opacity: 1
+                                })
+                                    .setLatLng(layer.getBounds().getCenter())
+                                    .setContent(info.code)
+                                    .addTo(map);
+                                if (!labelsVisible) {
+                                    idLabel.getElement()?.classList.add('hidden');
+                                }
+                                barangayIdLabels.push({ layer, label: idLabel, code: info.code });
 
                                 let occupied = 0;
                                 for (const [id, data] of Object.entries(occupancy)) {
@@ -398,12 +465,12 @@
                             const bounds = geoLayer.getBounds();
                             if (bounds.isValid()) {
                                 map.fitBounds(bounds, { padding: [16, 16], maxZoom: 16 });
+                                updateBarangayIdLabelSizes();
                             }
                         }, 100);
                     });
 
-
-                    // update layer tooltips when occupancy data changes in real-time via Firebase
+                // update layer tooltips when occupancy data changes in real-time via Firebase
                 if (window.firebaseDatabase) {
                     const occupancyRef = ref(window.firebaseDatabase, 'occupiedTents');
 

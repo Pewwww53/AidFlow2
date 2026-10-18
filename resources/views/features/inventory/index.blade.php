@@ -54,7 +54,9 @@
             @endif
             @if ($standardReliefPackSupply <= $minimumStandardReliefPacks)
                 <p>
-                    Only {{ $standardReliefPackSupply }} standard relief {{ \Illuminate\Support\Str::plural('pack', $standardReliefPackSupply) }} can be assembled (minimum {{ $minimumStandardReliefPacks }}).
+                    Only {{ $standardReliefPackSupply }} standard relief
+                    {{ \Illuminate\Support\Str::plural('pack', $standardReliefPackSupply) }} can be assembled (minimum
+                    {{ $minimumStandardReliefPacks }}).
                 </p>
             @endif
         </section>
@@ -155,8 +157,7 @@
                                 <td class="py-2">
                                     <button type="button"
                                         class="inventory-details-toggle cursor-pointer text-left text-red-700 underline decoration-dotted underline-offset-2 hover:text-red-900"
-                                        aria-expanded="false"
-                                        aria-controls="inventory-details-{{ $loop->index }}">
+                                        aria-expanded="false" aria-controls="inventory-details-{{ $loop->index }}">
                                         {{ $item['name'] ?? 'Unnamed Item' }}
                                     </button>
                                 </td>
@@ -205,15 +206,23 @@
                                                                 class="flex items-center gap-2">
                                                                 @csrf
                                                                 @method('PUT')
-                                                                <input type="hidden" name="name" value="{{ $record['name'] ?? '' }}">
-                                                                <input type="hidden" name="category" value="{{ $record['category'] ?? '' }}">
-                                                                <input type="hidden" name="unit" value="{{ $record['unit'] ?? '' }}">
-                                                                <input type="hidden" name="stock" value="{{ $record['stock'] ?? 0 }}">
-                                                                <input type="hidden" name="received" value="{{ $record['received'] ?? '' }}">
-                                                                <input type="hidden" name="expirationDate" value="{{ $record['expirationDate'] ?? '' }}">
-                                                                <label class="sr-only" for="minimum-stock-{{ $record['id'] }}">Minimum stock for {{ $record['name'] ?? 'item' }}</label>
-                                                                <input id="minimum-stock-{{ $record['id'] }}"
-                                                                    name="minimumStock" type="number" min="0"
+                                                                <input type="hidden" name="name"
+                                                                    value="{{ $record['name'] ?? '' }}">
+                                                                <input type="hidden" name="category"
+                                                                    value="{{ $record['category'] ?? '' }}">
+                                                                <input type="hidden" name="unit"
+                                                                    value="{{ $record['unit'] ?? '' }}">
+                                                                <input type="hidden" name="stock"
+                                                                    value="{{ $record['stock'] ?? 0 }}">
+                                                                <input type="hidden" name="received"
+                                                                    value="{{ $record['received'] ?? '' }}">
+                                                                <input type="hidden" name="expirationDate"
+                                                                    value="{{ $record['expirationDate'] ?? '' }}">
+                                                                <label class="sr-only"
+                                                                    for="minimum-stock-{{ $record['id'] }}">Minimum stock for
+                                                                    {{ $record['name'] ?? 'item' }}</label>
+                                                                <input id="minimum-stock-{{ $record['id'] }}" name="minimumStock"
+                                                                    type="number" min="0"
                                                                     value="{{ $record['minimumStock'] ?? 50 }}" required
                                                                     class="w-20 rounded border border-red-300 px-2 py-1">
                                                                 <button type="submit"
@@ -241,9 +250,9 @@
                     <button type="button" id="openExpiredModal"
                         class="cursor-pointer px-4 py-2 rounded-full bg-pink-100 border-2 border-red-600 text-red-800 font-bold">View
                         Expired Items</button>
-                    <button type="button" id="openBatchModal"
+                    {{-- <button type="button" id="openBatchModal"
                         class="cursor-pointer px-4 py-2 rounded-full bg-pink-100 border-2 border-red-600 text-red-800 font-bold">View
-                        Batch</button>
+                        Batch</button> --}}
                 @endif
             </div>
         </div>
@@ -300,9 +309,10 @@
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg border-2 border-red-600 p-4 min-h-[calc(40vh-120px)] max-h-[calc(40vh-120px)]">
-                <div class="text-red-800 text-lg font-semibold mb-2">Inventory Ledger</div>
-                <div class="flex flex-col gap-2">
+            <div
+                class="bg-white rounded-[18px] border-[3px] border-[#ef4444] p-4 min-h-[calc(40vh-120px)] max-h-[calc(40vh-120px)] overflow-auto">
+                <div class="mb-2 text-[18px] font-bold text-[#8a1c1c] sticky top-0 bg-white py-2">Inventory Ledger</div>
+                <div class="flex flex-col divide-y divide-[#f0b5b5]">
                     @forelse ($inventoryItems as $item)
                         @php
                             $distributed = $item['distributed'] ?? false;
@@ -311,25 +321,25 @@
                             $statusLabel = $distributed ? 'Distributed' : ($removed ? 'Removed' : 'Added');
                             $statusDate = $distributed ? $item['distributed'] : ($removed ? $item['removed'] : $item['added']);
                             $statusClass = $distributed
-                                ? 'text-blue-600 font-bold'
-                                : ($removed ? 'text-gray-600 font-bold' : 'text-green-600 font-bold');
-
+                                ? 'text-blue-600'
+                                : ($removed ? 'text-gray-600' : 'text-green-600');
                         @endphp
 
-                        <div class="flex justify-between items-center border-b border-pink-100 py-2">
-                            <div>
-                                <div class="font-semibold text-xs w-30 truncate" title="{{ $item['name'] ?? 'Unnamed Item' }}">
+                        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 py-2.5">
+                            <div class="min-w-0 overflow-hidden">
+                                <div class="truncate text-[18px] font-semibold text-[#111827]"
+                                    title="{{ $item['name'] ?? 'Unnamed Item' }}">
                                     {{ $item['name'] ?? 'Unnamed Item' }}
                                 </div>
-                                <div class="text-xs text-gray-600">{{ $item['category'] ?? 'Uncategorized' }}</div>
+                                <div class="text-[12px] text-gray-600">{{ $item['category'] ?? 'Uncategorized' }}</div>
                             </div>
-                            <div class="text-xs {{ $statusClass }}">
+                            <div class="shrink-0 whitespace-nowrap text-right text-[12px] font-semibold {{ $statusClass }}">
                                 {{ $statusLabel }} on
                                 {{ $statusDate ? \Carbon\Carbon::parse($statusDate)->format('m/d/y') : '—' }}
                             </div>
                         </div>
                     @empty
-                        <div class="text-gray-500 text-center py-4">No inventory items found.</div>
+                        <div class="py-4 text-center text-gray-500">No inventory items found.</div>
                     @endforelse
                 </div>
             </div>

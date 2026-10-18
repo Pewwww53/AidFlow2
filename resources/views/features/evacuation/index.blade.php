@@ -23,6 +23,22 @@
             margin-top: -6px;
         }
 
+        .leaflet-tooltip.barangay-id-label {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(31, 41, 55, 0.35);
+            border-radius: 0.375rem;
+            color: #1f2937;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 0.1rem 0.3rem;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        .leaflet-tooltip.barangay-id-label::before {
+            display: none;
+        }
+
         /* Glowing highlight styles for Leaflet SVG features */
         .glow-red {
             filter: drop-shadow(0 0 10px rgba(239, 68, 68, 0.95));
@@ -173,7 +189,9 @@
                     </div>
                     <div>
                         <p class="text-xs text-gray-700 mb-0.5">Occupied Tents</p>
-                        <p class="text-[28px] leading-none font-medium">{{ number_format($occupiedTentsCount ?? 0) }}</p>
+                        <p class="text-[28px] leading-none font-medium">
+                            {{ number_format($occupiedTentsCount) }}/<span id="total-tents-count">...</span>
+                        </p>
                     </div>
                 </div>
 
@@ -191,7 +209,13 @@
             </div>
 
             <div class="flex flex-col gap-2 bg-white rounded-[20px] border-[3px] border-[#8a1c1c] p-4 shadow-sm h-full">
-                <h2 class="text-lg text-[#be3d3d]">Barangay Occupancy</h2>
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="text-lg text-[#be3d3d]">Barangay Occupancy</h2>
+                    <button id="evacuation-label-toggle" type="button" aria-pressed="true"
+                        class="px-3 py-1 border border-[#d97c7c] rounded-full text-xs text-[#1f0000] hover:bg-[#ffbaba] transition">
+                        Hide IDs
+                    </button>
+                </div>
                 <div class="border border-gray-400 w-full h-full rounded-[14px] overflow-hidden bg-gray-50">
                     <div id="evacuation-map" class="w-full h-full"></div>
                 </div>
@@ -367,6 +391,13 @@
 
             renderTable(tableRows);
 
+
+            const totalTents = barangayList.reduce(
+                (total, barangay) => total + Object.keys(barangay.tents).length,
+                0
+            );
+            document.getElementById('total-tents-count').textContent = totalTents.toLocaleString();
+            
             const barangayMap = {};
             barangayList.forEach(b => {
                 barangayMap[b.name] = {
@@ -440,6 +471,18 @@
                     attributionControl: false,
                 });
 
+                const barangayIdLabels = [];
+                const labelToggle = document.getElementById('evacuation-label-toggle');
+                let labelsVisible = true;
+                labelToggle.addEventListener('click', () => {
+                    labelsVisible = !labelsVisible;
+                    labelToggle.textContent = labelsVisible ? 'Hide IDs' : 'Show IDs';
+                    labelToggle.setAttribute('aria-pressed', String(labelsVisible));
+                    barangayIdLabels.forEach(label => {
+                        label.getElement()?.classList.toggle('hidden', !labelsVisible);
+                    });
+                });
+
                 fetch('/geojson/sanjuan.geojson')
                     .then(response => response.json())
                     .then(data => {
@@ -453,6 +496,19 @@
                             onEachFeature(feature, layer) {
                                 const info = barangayMap[feature.properties.name];
                                 if (!info) return;
+                                const idLabel = L.tooltip({
+                                    permanent: true,
+                                    direction: 'center',
+                                    className: 'barangay-id-label',
+                                    opacity: 1,
+                                })
+                                    .setLatLng(layer.getBounds().getCenter())
+                                    .setContent(info.code)
+                                    .addTo(map);
+                                if (!labelsVisible) {
+                                    idLabel.getElement()?.classList.add('hidden');
+                                }
+                                barangayIdLabels.push(idLabel);
                                 layer.bindTooltip(getTooltipText(feature), {
                                     direction: 'center',
                                     className: 'map-label-tooltip',
@@ -549,15 +605,15 @@
                         const occupied = occupiedTents.find(t => t.tentId === tentId);
 
                         tbody.innerHTML += `
-                                                                <tr>
-                                                                    <td>${occupied?.date ?? "--"}</td>
-                                                                    <td>${tentId}</td>
-                                                                    <td class="${occupied ? "text-red-500" : "text-green-500"
+                                                                                <tr>
+                                                                                    <td>${occupied?.date ?? "--"}</td>
+                                                                                    <td>${tentId}</td>
+                                                                                    <td class="${occupied ? "text-red-500" : "text-green-500"
                             }">
-                                                                        ${occupied ? "Occupied" : "Available"}
-                                                                    </td>
-                                                                </tr>
-                                                            `;
+                                                                                        ${occupied ? "Occupied" : "Available"}
+                                                                                    </td>
+                                                                                </tr>
+                                                                            `;
                     });
 
                 modal.classList.remove("hidden");
