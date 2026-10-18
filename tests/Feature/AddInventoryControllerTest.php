@@ -64,3 +64,33 @@ it('stores inventory items without an expiration date when their category does n
 
     expect($response->getSession()->get('success'))->toBe('Item added successfully');
 });
+
+it('stores rice without an expiration date even when its category normally requires one', function () {
+    $firebase = Mockery::mock(FirebaseService::class);
+    $firebase->shouldReceive('createInventory')->once()->with([
+        'name' => 'Rice',
+        'category' => 'Food',
+        'unit' => 'Pack',
+        'stock' => 50,
+        'minimumStock' => 10,
+        'received' => '2026-07-26',
+        'expirationDate' => null,
+        'batch' => 'Batch 1',
+    ])->andReturn(['id' => 'abc123']);
+
+    $request = new Request([
+        'item_name' => 'Rice',
+        'category' => 'Food',
+        'unit' => 'Pack',
+        'quantity' => 50,
+        'minimumStock' => 10,
+        'date_received' => '2026-07-26',
+        'batch_option' => 'existing',
+        'batch' => 'Batch 1',
+    ]);
+
+    $controller = new AddInventoryController();
+    $response = $controller->store($request, $firebase);
+
+    expect($response->getSession()->get('success'))->toBe('Item added successfully');
+});

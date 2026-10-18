@@ -35,7 +35,9 @@ class AddInventoryController extends Controller
     /** Normalize supported form field names and save the validated inventory item. */
     public function store(Request $request, FirebaseService $firebase)
     {
-        $expirationRequired = in_array($request->input('category'), self::EXPIRATION_CATEGORIES, true);
+        $isRice = $request->input('item_name', $request->input('name')) === 'Rice';
+        $expirationRequired = !$isRice
+            && in_array($request->input('category'), self::EXPIRATION_CATEGORIES, true);
         $expirationDateRules = $expirationRequired
             ? 'nullable|date|required_without:expirationDate'
             : 'nullable|date';
@@ -77,7 +79,9 @@ class AddInventoryController extends Controller
             'added' => now()->toDateString(),
             'removed' => null,
             'distributed' => null,
-            'expirationDate' => $validated['expiration_date'] ?? $validated['expirationDate'] ?? null,
+            'expirationDate' => $isRice
+                ? null
+                : ($validated['expiration_date'] ?? $validated['expirationDate'] ?? null),
             'batch' => $batch,
         ];
 

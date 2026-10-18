@@ -212,13 +212,18 @@
         }
 
         function updateExpirationDateField() {
-            const requiresExpirationDate = categoriesWithExpiration.includes(categorySelect.value);
+            const isRice = itemSelect.value === 'Rice';
+            const requiresExpirationDate = !isRice && categoriesWithExpiration.includes(categorySelect.value);
             expirationDateField.classList.toggle('hidden', !requiresExpirationDate);
             expirationDateInput.required = requiresExpirationDate;
+            if (isRice) {
+                expirationDateInput.value = '';
+            }
         }
 
         batchOptions.forEach(option => option.addEventListener('change', updateBatchFields));
         itemSelect.addEventListener('change', updateItemFields);
+        itemSelect.addEventListener('change', updateExpirationDateField);
         categorySelect.addEventListener('change', updateExpirationDateField);
         updateItemFields();
         updateBatchFields();
