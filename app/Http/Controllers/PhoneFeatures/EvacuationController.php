@@ -53,6 +53,9 @@ class EvacuationController extends Controller
             'barangayCode' => $barangayCode,
             'barangayName' => $barangayName,
             'scannedAt' => $scannedAt->toISOString(),
+            'accountName' => $request->session()->get('user.fullName')
+                ?: $request->session()->get('user.username')
+                ?: $request->session()->get('username'),
         ];
 
         if (!$firebase->recordTentScan($tentCode, $firebaseData, $willBeOccupied)) {

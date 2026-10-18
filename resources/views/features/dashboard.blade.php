@@ -105,7 +105,7 @@
             </div>
         </div>
 
-        <div class="flex flex-row gap-2 flex-wrap lg:flex-nowrap w-full min-h-[calc(90vh-120px)]">
+        <div class="flex flex-row gap-2 flex-wrap lg:flex-nowrap w-full h-[calc(90vh-120px)]">
             {{-- Inventory --}}
             <div class="bg-white rounded-[20px] border-[3px] border-[#8a1c1c] p-4 shadow-sm flex flex-col w-130">
                 <h2 class="text-lg text-[#be3d3d] mb-3">Recent Inventory Transactions</h2>
@@ -248,9 +248,9 @@
                     </div>
                 </div>
 
-                <div class="border-t border-gray-200 pt-5 flex-1 flex flex-col">
-                    <p class="text-gray-900 text-sm mb-4">Audit Logs</p>
-
+                <div class="border-t border-gray-200 flex-1 flex flex-col max-h-20vh overflow-auto">
+                    
+                    <p class="text-gray-900 text-sm sticky top-0 bg-white">Audit Logs</p>
                     <div class="space-y-3 text-xs text-gray-700 flex-1">
                         @forelse($auditLogs as $log)
                             @php
@@ -268,6 +268,7 @@
                                     @if($meta)
                                         <p class="text-[11px] text-gray-500">{{ $meta }}</p>
                                     @endif
+                                    <p class="text-[11px] text-gray-500">By {{ $log['accountName'] ?? 'Unknown account' }}</p>
                                     <p class="text-[11px] text-gray-500">{{ $formattedTime }}</p>
                                 </div>
                             </div>

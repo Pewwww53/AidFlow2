@@ -97,6 +97,7 @@ class DashboardController extends Controller
                         : ($action === 'unoccupied' ? 'Tent unoccupied' : 'Tent scanned'),
                     'tentCode' => $event['tentCode'] ?? $event['tent_code'] ?? 'N/A',
                     'barangayName' => $event['barangayName'] ?? $event['barangay_name'] ?? $event['barangay'] ?? '',
+                    'accountName' => $event['accountName'] ?? $event['account_name'] ?? $event['username'] ?? null,
                     'timestamp' => $timestamp,
                     'color' => $action === 'occupied' ? 'bg-green-500' : ($action === 'unoccupied' ? 'bg-[#cc2929]' : 'bg-amber-500'),
                 ];
@@ -111,6 +112,7 @@ class DashboardController extends Controller
                     'type' => 'reliefPackScan',
                     'label' => "Relief pack #{$packNumber} scanned",
                     'packNumber' => $packNumber,
+                    'accountName' => $event['accountName'] ?? $event['account_name'] ?? $event['username'] ?? null,
                     'timestamp' => $timestamp,
                     'color' => 'bg-blue-500',
                 ];

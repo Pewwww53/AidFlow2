@@ -18,6 +18,8 @@ class PhoneEvacuationScanTest extends TestCase
             'barangay_code' => 'BB',
             'barangay_name' => 'Balong-Bato',
         ]);
+        $request->setLaravelSession(app('session')->driver());
+        $request->session()->put('user', ['fullName' => 'Test Account']);
         $firebase = Mockery::mock(FirebaseService::class);
         $firebase->shouldReceive('getOccupiedTent')->once()->with('BB-001')->andReturn(null);
         $firebase->shouldReceive('recordTentScan')->once()->with(
@@ -26,6 +28,7 @@ class PhoneEvacuationScanTest extends TestCase
                 $data['tentCode'] === 'BB-001'
                 && $data['barangayCode'] === 'BB'
                 && $data['barangayName'] === 'Balong-Bato'
+                && $data['accountName'] === 'Test Account'
                 && isset($data['scannedAt'])
             ),
             true

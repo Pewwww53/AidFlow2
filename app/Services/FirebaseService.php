@@ -77,7 +77,7 @@ class FirebaseService
         return $this->get('relief_packs');
     }
 
-    public function consumeReliefPack(int $packNumber, array $requiredItems): array
+    public function consumeReliefPack(int $packNumber, array $requiredItems, ?string $accountName = null): array
     {
         $scanPath = "reliefPackScans/{$packNumber}";
         $existingScan = $this->get($scanPath);
@@ -132,6 +132,7 @@ class FirebaseService
         $updates[$scanPath] = [
             'pack_number' => $packNumber,
             'scanned_at' => now()->toIso8601String(),
+            'accountName' => $accountName,
         ];
 
         $response = Http::withoutVerifying()->patch("{$this->databaseUrl}/.json", $updates);

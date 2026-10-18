@@ -16,14 +16,18 @@ class ReliefGoodsScanTest extends TestCase
         $firebase = Mockery::mock(FirebaseService::class);
         $firebase->shouldReceive('consumeReliefPack')
             ->once()
-            ->with(1, ['Rice' => 6])
+            ->with(1, ['Rice' => 6], 'Test Account')
             ->andReturn(['status' => 'consumed']);
 
         $calculator = Mockery::mock(ReliefPackCalculator::class);
         $calculator->shouldReceive('requiredItems')->once()->andReturn(['Rice' => 6]);
 
+        $request = Request::create('/phoneFeatures/reliefGoods/scan', 'POST', ['package_id' => '#1']);
+        $request->setLaravelSession(app('session')->driver());
+        $request->session()->put('user', ['fullName' => 'Test Account']);
+
         $response = (new ReliefGoodsController())->scan(
-            Request::create('/phoneFeatures/reliefGoods/scan', 'POST', ['package_id' => '#1']),
+            $request,
             $firebase,
             $calculator
         );
@@ -36,6 +40,7 @@ class ReliefGoodsScanTest extends TestCase
         $firebase = Mockery::mock(FirebaseService::class);
         $firebase->shouldReceive('consumeReliefPack')
             ->once()
+            ->with(1, ['Rice' => 6], null)
             ->andReturn([
                 'status' => 'insufficient_stock',
                 'item' => 'Rice',

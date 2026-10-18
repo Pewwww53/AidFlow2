@@ -28,7 +28,10 @@ class ReliefGoodsController extends Controller
         ]);
 
         $packNumber = (int) ltrim($validated['package_id'], '#');
-        $result = $firebase->consumeReliefPack($packNumber, $calculator->requiredItems());
+        $accountName = $request->session()->get('user.fullName')
+            ?: $request->session()->get('user.username')
+            ?: $request->session()->get('username');
+        $result = $firebase->consumeReliefPack($packNumber, $calculator->requiredItems(), $accountName);
 
         if ($result['status'] === 'already_scanned') {
             return response()->json([
