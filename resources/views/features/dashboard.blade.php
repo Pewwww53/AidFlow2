@@ -100,7 +100,9 @@
                 </div>
                 <div>
                     <p class="text-xs text-gray-700 mb-0.5 whitespace-nowrap">Occupied Barangays</p>
-                    <p class="text-[28px] leading-none font-medium">{{ number_format($barangayCount) }}</p>
+                    <p class="text-[28px] leading-none font-medium">
+                        {{ number_format($barangayCount) }}/<span id="total-barangays-count">...</span>
+                    </p>
                 </div>
             </div>
         </div>
@@ -290,6 +292,7 @@
                 0
             );
             document.getElementById('total-tents-count').textContent = totalTents.toLocaleString();
+            document.getElementById('total-barangays-count').textContent = barangayList.length.toLocaleString();
 
             const barangayMap = {};
             barangayList.forEach(b => {
