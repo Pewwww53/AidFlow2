@@ -29,6 +29,14 @@
                     <p id="availableReliefPacks" class="text-sm text-gray-600">
                         {{ $availableReliefPacks > 0 ? "{$availableReliefPacks} relief pack(s) available." : 'No complete relief packs are currently available.' }}
                     </p>
+                    <div class="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+                        <h3 class="text-sm font-semibold text-gray-900">Requirements for each relief pack</h3>
+                        <ul class="mt-2 grid grid-cols-1 gap-1 text-sm text-gray-700 sm:grid-cols-2">
+                            @foreach ($reliefPackRequirements as $item)
+                                <li>{{ $item['name'] }}: {{ $item['quantity'] }} {{ $item['unit'] }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
 
                 <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
