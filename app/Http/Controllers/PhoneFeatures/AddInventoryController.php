@@ -11,6 +11,29 @@ class AddInventoryController extends Controller
 {
     private const EXPIRATION_CATEGORIES = ['Food', 'Medicine', 'Drink', 'Hygiene'];
 
+    private const ITEM_DEFAULTS = [
+        'Toothbrush' => ['quantity' => 1500, 'unit' => 'Pieces', 'category' => 'Hygiene'],
+        'Toothpaste' => ['quantity' => 600, 'unit' => 'Pieces', 'category' => 'Hygiene'],
+        'Shampoo' => ['quantity' => 300, 'unit' => 'Bottles', 'category' => 'Hygiene'],
+        'Bath Bar Soap' => ['quantity' => 1200, 'unit' => 'Pieces', 'category' => 'Hygiene'],
+        'Laundry Bar Soap' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Equipment'],
+        'Sanitary Napkin' => ['quantity' => 1200, 'unit' => 'Packs', 'category' => 'Hygiene'],
+        'Comb' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Hygiene'],
+        'Disposable Shaving Razor' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Hygiene'],
+        'Nail Cutter' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Hygiene'],
+        'Bathroom Dipper' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Equipment'],
+        '20L Square Plastic Bucket with Deep Cover and Plastic Handle' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Equipment'],
+        'Blanket' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Equipment'],
+        'Mosquito Net' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Equipment'],
+        'Mat' => ['quantity' => 300, 'unit' => 'Pieces', 'category' => 'Equipment'],
+        'Kitchen Utensils' => ['quantity' => 300, 'unit' => 'Sets', 'category' => 'Equipment'],
+        'Rice' => ['quantity' => 1800, 'unit' => 'Kg', 'category' => 'Food'],
+        'Canned Sardines' => ['quantity' => 1500, 'unit' => 'Cans', 'category' => 'Food'],
+        'Canned Tuna' => ['quantity' => 1500, 'unit' => 'Cans', 'category' => 'Food'],
+        'Canned Beef Loaf' => ['quantity' => 1500, 'unit' => 'Cans', 'category' => 'Food'],
+        'Coffee or Energy Drinks' => ['quantity' => 1500, 'unit' => 'Sachets', 'category' => 'Food'],
+    ];
+
     public function __construct()
     {
     }
@@ -29,6 +52,7 @@ class AddInventoryController extends Controller
         return view('phoneFeatures.addInventory', [
             'batches' => $batches,
             'expirationCategories' => self::EXPIRATION_CATEGORIES,
+            'itemDefaults' => self::ITEM_DEFAULTS,
         ]);
     }
 

@@ -4,6 +4,36 @@ use App\Http\Controllers\PhoneFeatures\AddInventoryController;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 
+it('provides presets for the listed inventory items', function () {
+    $firebase = Mockery::mock(FirebaseService::class);
+    $firebase->shouldReceive('getInventory')->once()->andReturn([]);
+
+    $response = (new AddInventoryController())->index($firebase);
+    $itemDefaults = $response->getData()['itemDefaults'];
+
+    expect($itemDefaults)->toHaveCount(20)
+        ->and($itemDefaults['Toothbrush'])->toBe([
+            'quantity' => 1500,
+            'unit' => 'Pieces',
+            'category' => 'Hygiene',
+        ])
+        ->and($itemDefaults['Shampoo'])->toBe([
+            'quantity' => 300,
+            'unit' => 'Bottles',
+            'category' => 'Hygiene',
+        ])
+        ->and($itemDefaults['Rice'])->toBe([
+            'quantity' => 1800,
+            'unit' => 'Kg',
+            'category' => 'Food',
+        ])
+        ->and($itemDefaults['Kitchen Utensils'])->toBe([
+            'quantity' => 300,
+            'unit' => 'Sets',
+            'category' => 'Equipment',
+        ]);
+});
+
 it('stores inventory items from the phone form in firebase', function () {
     $firebase = Mockery::mock(FirebaseService::class);
     $firebase->shouldReceive('createInventory')->once()->with([
