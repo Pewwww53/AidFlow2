@@ -7,12 +7,12 @@ use Illuminate\Support\Collection;
 class ReliefPackCalculator
 {
     private const REQUIRED_ITEMS = [
-        ['name' => 'Toothbrush', 'quantity' => 5, 'unit' => 'pieces'],
-        ['name' => 'Toothpaste', 'quantity' => 2, 'unit' => 'pieces'],
+        ['name' => 'Toothbrush', 'quantity' => 5, 'unit' => 'piece'],
+        ['name' => 'Toothpaste', 'quantity' => 2, 'unit' => 'piece'],
         ['name' => 'Shampoo', 'quantity' => 1, 'unit' => 'bottle'],
-        ['name' => 'Bath Bar Soap', 'quantity' => 4, 'unit' => 'pieces'],
-        ['name' => 'Laundry Bar Soap', 'quantity' => 2000, 'unit' => 'grams'],
-        ['name' => 'Sanitary Napkin', 'quantity' => 4, 'unit' => 'packs'],
+        ['name' => 'Bath Bar Soap', 'quantity' => 4, 'unit' => 'piece'],
+        ['name' => 'Laundry Bar Soap', 'quantity' => 2000, 'unit' => 'gram'],
+        ['name' => 'Sanitary Napkin', 'quantity' => 4, 'unit' => 'pack'],
         ['name' => 'Comb', 'quantity' => 1, 'unit' => 'piece'],
         ['name' => 'Disposable Shaving Razor', 'quantity' => 1, 'unit' => 'piece'],
         ['name' => 'Nail Cutter', 'quantity' => 1, 'unit' => 'piece'],
@@ -27,10 +27,10 @@ class ReliefPackCalculator
         ['name' => 'Mat', 'quantity' => 1, 'unit' => 'piece'],
         ['name' => 'Kitchen Utensils', 'quantity' => 1, 'unit' => 'set'],
         ['name' => 'Rice', 'quantity' => 6, 'unit' => 'kg'],
-        ['name' => 'Canned Sardines', 'quantity' => 5, 'unit' => 'cans'],
-        ['name' => 'Canned Tuna', 'quantity' => 5, 'unit' => 'cans'],
-        ['name' => 'Canned Beef Loaf', 'quantity' => 5, 'unit' => 'cans'],
-        ['name' => 'Coffee or Energy Drinks', 'quantity' => 5, 'unit' => 'sachets'],
+        ['name' => 'Canned Sardines', 'quantity' => 5, 'unit' => 'can'],
+        ['name' => 'Canned Tuna', 'quantity' => 5, 'unit' => 'can'],
+        ['name' => 'Canned Beef Loaf', 'quantity' => 5, 'unit' => 'can'],
+        ['name' => 'Coffee or Energy Drinks', 'quantity' => 5, 'unit' => 'sachet'],
     ];
 
     public function requiredItems(): array
